@@ -1,5 +1,6 @@
 #pragma once
 #include <autowiring/autowiring.h>
+#include "Window.h"
 
 struct ARScreenContext {};
 
@@ -14,4 +15,7 @@ public:
 public:
   void Main(void);
   void Filter(void) override;
+
+  void HandleWindowEvents();
+  Window m_Window;
 };

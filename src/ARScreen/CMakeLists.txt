@@ -27,4 +27,4 @@ add_executable(ARScreen ${_add_executable_options} ${ARScreen_SOURCES})
 set_property(TARGET ARScreen PROPERTY FOLDER "Applications")
 
 target_link_libraries(ARScreen utility)
-target_link_libraries(ARScreen OculusSDK::OculusSDK SFML::SFML Eigen::Eigen Leap::Leap Glew::Glew FreeImage::FreeImage)
+target_link_libraries(ARScreen OpenGL::OpenGL OculusSDK::OculusSDK SFML::SFML Eigen::Eigen Leap::Leap Glew::Glew FreeImage::FreeImage)

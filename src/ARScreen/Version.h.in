@@ -1,0 +1,10 @@
+#define ARScreen_VERSION_MAJOR @ARScreen_VERSION_MAJOR@
+#define ARScreen_VERSION_MINOR @ARScreen_VERSION_MINOR@
+#define ARScreen_VERSION_PATCH @ARScreen_VERSION_PATCH@
+#define ARScreen_VERSION "@ARScreen_VERSION@"
+#define ARScreen_WVERSION L"@ARScreen_VERSION@"
+
+#define ARScreen_APPNAME "@ARScreen_APPNAME@"
+#define ARScreen_APPDESC "@ARScreen_APPDESC@"
+#define LEAP_COMPANY_NAME "@LEAP_COMPANY_NAME@"
+#define APP_COPYRIGHT "@APP_COPYRIGHT@"

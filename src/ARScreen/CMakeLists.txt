@@ -8,6 +8,8 @@ set(ARScreen_APPDESC "Leap Motion ARScreen")
 set(ARScreen_SOURCES
   ARScreen.cpp
   ARScreen.h
+  Window.h
+  Window.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/Version.h
 )
 
@@ -25,4 +27,4 @@ add_executable(ARScreen ${_add_executable_options} ${ARScreen_SOURCES})
 set_property(TARGET ARScreen PROPERTY FOLDER "Applications")
 
 target_link_libraries(ARScreen utility)
-target_link_libraries(ARScreen OculusSDK::OculusSDK SFML::SFML Eigen::Eigen Leap::Leap Glew::Glew)
+target_link_libraries(ARScreen OculusSDK::OculusSDK SFML::SFML Eigen::Eigen Leap::Leap Glew::Glew FreeImage::FreeImage)

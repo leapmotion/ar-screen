@@ -1,0 +1,5 @@
+#!/bin/bash
+#
+# functionally equivalent to the Stringify.cpp program
+
+sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/^/"/' -e 's/$/\\n"/' "$1" > "$2"

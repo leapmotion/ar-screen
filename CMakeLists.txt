@@ -14,13 +14,28 @@ set(APP_COPYRIGHT "Copyright © 2015 Leap Motion, Inc. All rights reserved.")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules")
 include(LeapCMakeTemplates)
 
-if(APPLE)
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set(CMAKE_XCODE_ATTRIBUTE_STRIP_INSTALLED_PRODUCT YES)
   set(CMAKE_XCODE_ATTRIBUTE_DEAD_CODE_STRIPPING YES)
 endif()
 
 leap_find_external_libraries(x86_vc12)
 leap_use_standard_platform_settings()
+
+macro(target_strip Target)
+  # primary function of this macro: strip symbols at link time on Mac and Linux
+  # secondary function: avoid MSVC warnings in Debug by specifying /nodefaultlib
+  # tertiary function: avoid MSVC warnings about combining /incremental with /ltcg
+  if(MSVC)
+    if(USE_PRODUCTION_FLAGS)
+      set_target_properties(${Target} PROPERTIES LINK_FLAGS_DEBUG "/INCREMENTAL:NO /NODEFAULTLIB:MSVCRT")
+    else()
+      set_target_properties(${Target} PROPERTIES LINK_FLAGS_DEBUG "/NODEFAULTLIB:MSVCRT")
+    endif()
+  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set_target_properties(${Target} PROPERTIES LINK_FLAGS_RELEASE "-Xlinker -unexported_symbol -Xlinker \"*\" -Xlinker -dead_strip -Xlinker -dead_strip_dylibs")
+  endif()
+endmacro()
 
 include(TargetImportedLibraries)
 include(AddPCH)

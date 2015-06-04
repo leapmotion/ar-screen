@@ -2,6 +2,7 @@
 #include "ARScreen.h"
 #include "utility/PlatformInitializer.h"
 #include <iostream>
+#include <stdexcept>
 
 int main(int argc, char **argv)
 {
@@ -44,7 +45,7 @@ void ARScreen::Main(void) {
   WindowParams params;
   m_Window.Init(params);
   if (glewInit() != GLEW_OK) {
-    throw std::exception("Unable to initialize glew");
+    throw std::runtime_error("Unable to initialize glew");
   }
   FreeImage_Initialise();
 
@@ -78,15 +79,15 @@ void ARScreen::HandleWindowEvents() {
     } else if (e.type == sf::Event::Closed) {
       exit(0);
     } else if (e.type == sf::Event::Resized) {
-      
+
     } else if (e.type == sf::Event::MouseButtonPressed) {
-      
+
     } else if (e.type == sf::Event::MouseButtonReleased) {
-      
+
     } else if (e.type == sf::Event::MouseMoved) {
-      
+
     } else if (e.type == sf::Event::MouseWheelMoved) {
-      
+
     }
   }
 }

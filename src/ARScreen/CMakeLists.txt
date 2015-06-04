@@ -16,8 +16,8 @@ set(ARScreen_SOURCES
 add_pch(ARScreen_SOURCES "stdafx.h" "stdafx.cpp")
 
 set(_add_executable_options "")
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # This is the correct way to detect Mac OS X operating system -- see http://www.openguru.com/2009/04/cmake-detecting-platformoperating.html
-    set(_add_executable_options "MACOSX_BUNDLE")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  set(_add_executable_options ${_add_executable_options} MACOSX_BUNDLE)
 endif()
 
 configure_file(Version.h.in Version.h)
@@ -28,3 +28,15 @@ set_property(TARGET ARScreen PROPERTY FOLDER "Applications")
 
 target_link_libraries(ARScreen utility)
 target_link_libraries(ARScreen OpenGL::OpenGL OculusSDK::OculusSDK SFML::SFML Eigen::Eigen Leap::Leap Glew::Glew FreeImage::FreeImage)
+target_strip(ARScreen)
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  set_target_properties(ARScreen PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/src/ARScreen/ARScreen.plist.in)
+endif()
+
+# Install commands for the Resources
+install(TARGETS ARScreen COMPONENT ARScreen
+  RUNTIME DESTINATION "."
+  BUNDLE DESTINATION "."
+  RESOURCE DESTINATION "."
+)

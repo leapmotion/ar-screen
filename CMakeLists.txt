@@ -54,6 +54,7 @@ if(MSVC)
 endif()
 find_package(SFML 2.1 REQUIRED)
 find_package(OculusSDK REQUIRED)
+find_package(Leap REQUIRED)
 
 include_directories(${CMAKE_BINARY_DIR})
 include_directories(src)

@@ -52,6 +52,8 @@ find_package(Glew 1.9.0 REQUIRED)
 if(MSVC)
   find_package(FreeImage REQUIRED)
 endif()
+find_package(SFML 2.1 REQUIRED)
+find_package(OculusSDK REQUIRED)
 
 include_directories(${CMAKE_BINARY_DIR})
 include_directories(src)

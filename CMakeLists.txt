@@ -1,18 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
 
-#CMAKE_OSX_* variables must be set prior to the first call to project() to function correctly.
-#If this is not done, the first time you configure, they will contain bad values.
-if(APPLE)
-  if (NOT CMAKE_OSX_ARCHITECTURES)
-    set(CMAKE_OSX_ARCHITECTURES "x86_64" CACHE STRING "Mac OS X build architectures" FORCE)
-  endif()
-  if (NOT CMAKE_OSX_SYSROOT)
-    set(CMAKE_OSX_SYSROOT "macosx10.9" CACHE STRING "Mac OS X build environment" FORCE)
-  endif()
-  set(CMAKE_OSX_DEPLOYMENT_TARGET ${OSX_MINIMUM_VERSION} CACHE STRING "Mac OS X deployment target" FORCE)
-  mark_as_advanced(CMAKE_OSX_DEPLOYMENT_TARGET)
-endif()
-
 project(ARScreen)
 
 include(CTest)
@@ -38,18 +25,37 @@ leap_use_standard_platform_settings()
 include(TargetImportedLibraries)
 include(AddPCH)
 include(ConditionalSources)
+include(CMakeFindDependencyMacro)
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
 enable_testing()
 
+#Find installed autowiring, or point to local version with autowiring_DIR
+if(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm")
+  set(autowiring_ARCHITECTURE "arm")
+else()
+  if(DEFINED CMAKE_OSX_ARCHITECTURES)
+    set(autowiring_ARCHITECTURE ${CMAKE_OSX_ARCHITECTURES})
+  endif()
+  if(BUILD_64_BIT)
+    set(autowiring_ARCHITECTURE "amd64")
+  else()
+    set(autowiring_ARCHITECTURE "x86")
+  endif()
+endif()
+find_package(autowiring 0.5.4 REQUIRED)
 find_package(Eigen 3.2.3 REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(Glew 1.9.0 REQUIRED)
 if(MSVC)
   find_package(FreeImage REQUIRED)
 endif()
+
+include_directories(${CMAKE_BINARY_DIR})
+include_directories(src)
+include_directories(${autowiring_INCLUDE_DIR})
 
 add_subdirectory(src)
 include(CPack)

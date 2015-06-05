@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "TexturedFrame.h"
 
 TexturedFrame::TexturedFrame() {

@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "PrimitiveGeometry.h"
 
 #include "Leap/GL/Shader.h"

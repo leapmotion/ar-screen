@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "SVGPrimitive.h"
 
 #include <Eigen/StdVector>

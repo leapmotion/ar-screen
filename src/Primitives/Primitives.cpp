@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "Primitives.h"
 
 #include <cassert>

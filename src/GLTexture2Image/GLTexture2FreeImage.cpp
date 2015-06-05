@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "GLTexture2FreeImage.h"
 
 #define FREEIMAGE_LIB

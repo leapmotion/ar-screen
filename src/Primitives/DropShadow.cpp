@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "DropShadow.h"
 
 #include "Leap/GL/Texture2.h"

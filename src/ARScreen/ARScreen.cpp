@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "ARScreen.h"
 #include "Globals.h"
+#include "OSInterface/OSVirtualScreen.h"
+#include "OSInterface/OSWindowMonitor.h"
 #include "utility/PlatformInitializer.h"
 #include "utility/Utilities.h"
 
@@ -44,6 +46,9 @@ void ARScreen::Main(void) {
   AutoCreateContextT<ARScreenContext> arScreenCtxt;
   arScreenCtxt->Initiate();
   CurrentContextPusher pshr(arScreenCtxt);
+
+  AutoRequired<OSVirtualScreen>();
+  AutoRequired<OSWindowMonitor>()->EnableScan(true);
 
   WindowParams params;
   params.antialias = true;
@@ -124,6 +129,7 @@ void ARScreen::HandleWindowEvents() {
 }
 
 void ARScreen::Update() {
+  m_update(&Updatable::Tick)(Globals::timeBetweenFrames);
   m_Scene.ProcessLeapFrames(m_Listener.TakeAccumulatedFrames());
 }
 

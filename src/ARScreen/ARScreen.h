@@ -7,6 +7,8 @@
 
 struct ARScreenContext {};
 
+class Updatable;
+
 class ARScreen :
   public DispatchQueue,
   public ExceptionFilter
@@ -22,6 +24,8 @@ public:
   void HandleWindowEvents();
   void Update();
   void Render();
+
+  AutoFired<Updatable> m_update;
 
   Scene m_Scene;
   Window m_Window;

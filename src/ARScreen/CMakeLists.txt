@@ -56,6 +56,7 @@ target_link_libraries(ARScreen
   LeapGL
   LeapListener
   OculusVR
+  OSInterface
   Leap::Leap
   SFML::SFML
   Eigen::Eigen

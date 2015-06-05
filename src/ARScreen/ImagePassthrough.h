@@ -5,7 +5,7 @@
 #include "Leap/GL/Texture2.h"
 #include "LeapListener.h"
 
-class ImagePassthrough : public PrimitiveBase {
+class ImagePassthrough {
 public:
   ImagePassthrough();
   void Init();
@@ -13,10 +13,10 @@ public:
   void Update(const Leap::ImageList& images);
   void SetUseStencil(bool use) { m_UseStencil = use; }
   void DrawStencilObject(PrimitiveBase* obj, RenderState& renderState, float viewWidth, float viewX, float viewHeight, float l00, float l11, float l03, float opacity) const;
+  void Draw(RenderState& renderState) const;
 
-protected:
-  virtual void DrawContents(RenderState& renderState) const override;
-private: 
+private:
+
   std::shared_ptr<Leap::GL::Shader> m_Shader;
   std::shared_ptr<Leap::GL::Shader> m_HandsShader;
   std::shared_ptr<RectanglePrim> m_Quad;
@@ -31,6 +31,7 @@ private:
   int m_ActiveTexture;
 
   bool m_UseStencil;
+  bool m_Color;
 
   size_t m_ImageBytes[NUM_CAMERAS];
   size_t m_DistortionBytes[NUM_CAMERAS];

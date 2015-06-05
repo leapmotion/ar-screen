@@ -5,8 +5,6 @@ namespace Shaders {
   static std::string imagesFrag = R"shader(
 #version 120
 
-//ray. This is specialized for overlays
-//varying vec2 frag_ray;
 varying vec3 out_position;
 varying vec3 out_normal;
 varying vec2 out_tex_coord;
@@ -28,22 +26,131 @@ uniform float gamma;
 uniform float brightness;
 uniform bool use_stencil;
 uniform float stencil_opacity;
+uniform bool use_color;
+
+float width = 672.0;
+float height = 600.0;
+float irscale = 1.0;
+
+float corr_ir_g = 0.1;
+float corr_ir_rb = 0.1;
+float corr_r_b = 0.2;
+float corr_g_rb = 0.2;
+
+float redShift = 0.44;
+float greenShift = 0;
+
+vec2 r_offset = vec2(-0.5, 0);
+vec2 g_offset = vec2(-0.5, 0.5);
+vec2 b_offset = vec2(0, 0.5);
 
 void main(void) {
-  vec2 texCoord = texture2D(distortion, out_tex_coord).xy;// +vec2(0.125, 0.125);
+  vec2 texCoord = texture2D(distortion, out_tex_coord).xy;
 
-  gl_FragColor.rgb = brightness*vec3(pow(texture2D(texture, texCoord).r, gamma));
-  gl_FragColor.a = 1.0;
+  float iramt;
+  if (use_color) {
+    float dx = 1.0/width;
+    float dy = 1.0/height;
+
+    float rscale = brightness*(1.0 + redShift - 0.5*greenShift);
+    float gscale = brightness*(1.0 + greenShift);
+    float bscale = brightness*(1.0 - redShift - 0.5*greenShift);
+   
+    vec2 redOffset = vec2(dx, dy)*r_offset;
+    vec2 greenOffset = vec2(dx, dy)*g_offset;
+    vec2 blueOffset = vec2(dx, dy)*b_offset;
+
+    float ir_lf = texture2D(texture, texCoord).a;
+    float ir_l = texture2D(texture, texCoord + vec2(-dx, 0)).a;
+    float ir_t = texture2D(texture, texCoord + vec2(0, -dy)).a;
+    float ir_r = texture2D(texture, texCoord + vec2(dx, 0)).a;
+    float ir_b = texture2D(texture, texCoord + vec2(0, dy)).a;
+    float ir_hf = ir_lf - 0.25*(ir_l + ir_t + ir_r + ir_b);
+
+    float r_lf = texture2D(texture, texCoord + redOffset).b;
+    float r_l = texture2D(texture, texCoord + redOffset + vec2(-dx, 0)).b;
+    float r_t = texture2D(texture, texCoord + redOffset + vec2(0, -dy)).b;
+    float r_r = texture2D(texture, texCoord + redOffset + vec2(dx, 0)).b;
+    float r_b = texture2D(texture, texCoord + redOffset + vec2(0, dy)).b;
+    float r_hf = r_lf - 0.25*(r_l + r_t + r_r + r_b);
+
+    float g_lf = texture2D(texture, texCoord + greenOffset).r;
+    float g_l = texture2D(texture, texCoord + greenOffset + vec2(-dx, 0)).r;
+    float g_t = texture2D(texture, texCoord + greenOffset + vec2(0, -dy)).r;
+    float g_r = texture2D(texture, texCoord + greenOffset + vec2(dx, 0)).r;
+    float g_b = texture2D(texture, texCoord + greenOffset + vec2(0, dy)).r;
+    float g_hf = g_lf - 0.25*(g_l + g_t + g_r + g_b);
+
+    float b_lf = texture2D(texture, texCoord + blueOffset).g;
+    float b_l = texture2D(texture, texCoord + blueOffset + vec2(-dx, 0)).g;
+    float b_t = texture2D(texture, texCoord + blueOffset + vec2(0, -dy)).g;
+    float b_r = texture2D(texture, texCoord + blueOffset + vec2(dx, 0)).g;
+    float b_b = texture2D(texture, texCoord + blueOffset + vec2(0, dy)).g;
+    float b_hf = b_lf - 0.25*(b_l + b_t + b_r + b_b);
+    
+    const mat4 transformation = mat4(5.6220, -1.5456, 0.3634, -0.1106, -1.6410, 3.1944, -1.7204, 0.0189, 0.1410, 0.4896, 10.8399, -0.1053, -3.7440, -1.9080, -8.6066, 1.0000);
+    const mat4 conservative = mat4(5.6220, 0.0000, 0.3634, 0.0000, 0.0000, 3.1944, 0.0000, 0.0189, 0.1410, 0.4896, 10.8399, 0.0000, 0.0000, 0.0000, 0.0000, 1.0000);
+
+    const mat4 transformation_filtered = mat4(5.0670, -1.2312, 0.8625, -0.0507, -1.5210, 3.1104, -2.0194, 0.0017, -0.8310, -0.3000, 13.1744, -0.1052, -2.4540, -1.3848, -10.9618, 1.0000);
+    const mat4 conservative_filtered = mat4(5.0670, 0.0000, 0.8625, 0.0000, 0.0000, 3.1104, 0.0000, 0.0017, 0.0000, 0.0000, 13.1744, 0.0000, 0.0000, 0.0000, 0.0000, 1.0000);
+
+    vec4 input_lf = vec4(r_lf, g_lf, b_lf, ir_lf);
+
+    // input_lf = bilateral_a*bilateral(texCoord, input_lf) + (1-bilateral_a)*input_lf;
+    input_lf.r += ir_hf*corr_ir_rb + g_hf*corr_g_rb + b_hf*corr_r_b;
+    input_lf.g += ir_hf*corr_ir_g + r_hf*corr_g_rb + b_hf*corr_g_rb;
+    input_lf.b += ir_hf*corr_ir_rb + r_hf*corr_r_b + g_hf*corr_g_rb;
+
+    vec4 output_lf, output_lf_fudge;
+    output_lf = transformation*input_lf;
+    output_lf_fudge = conservative*input_lf;
+    //vec4 output_lf_gray = gray*input_lf;
+
+    float fudge_threshold = 0.5;
+    float ir_fudge_threshold = 0.95;
+    float ir_fudge_factor = 0.333*(r_lf + g_lf + b_lf);
+
+    float rfudge = r_lf > fudge_threshold ? (r_lf - fudge_threshold)/(1.0 - fudge_threshold) : 0;
+    float gfudge = g_lf > fudge_threshold ? (g_lf - fudge_threshold)/(1.0 - fudge_threshold) : 0;
+    float bfudge = b_lf > fudge_threshold ? (b_lf - fudge_threshold)/(1.0 - fudge_threshold) : 0;
+    float irfudge = ir_fudge_factor > ir_fudge_threshold ? (ir_fudge_factor - ir_fudge_threshold)/(1.0 - ir_fudge_threshold) : 0;
+    rfudge *= rfudge;
+    gfudge *= gfudge;
+    bfudge *= bfudge;
+    irfudge *= irfudge;
+
+    gl_FragColor.r = rfudge*output_lf_fudge.r + (1-rfudge)*output_lf.r;
+    gl_FragColor.g = gfudge*output_lf_fudge.g + (1-gfudge)*output_lf.g;
+    gl_FragColor.b = bfudge*output_lf_fudge.b + (1-bfudge)*output_lf.b;
+    float ir_out = irfudge*output_lf_fudge.a + (1-irfudge)*output_lf.a;
+
+    gl_FragColor.r *= rscale;
+    gl_FragColor.g *= gscale;
+    gl_FragColor.b *= bscale;
+    ir_out *= irscale;
+
+    iramt = pow(ir_out, gamma);
+
+    gl_FragColor.rgb = pow(gl_FragColor.rgb, vec3(gamma));
+    gl_FragColor.a = 1.0;
+  } else {
+    gl_FragColor.rgb = brightness*vec3(pow(texture2D(texture, texCoord).r, gamma));
+    gl_FragColor.a = 1.0;
+  }
 
   if (use_stencil) {
     float offset = 0.35;
-    float mult = clamp((gl_FragColor.r - offset) * 10.0, 0.0, 1.0);
-    gl_FragColor.a = stencil_opacity*mult;
+    float value = gl_FragColor.r;
+    if (use_color) {
+      value = iramt;
+    }
+    float mult = clamp((value - offset) * 10.0, 0.0, 1.0);
+    gl_FragColor.a = stencil_opacity*smoothstep(0.0, 1.0, mult);
   }
 }
 )shader";
 
-  static std::string imagesHandsFrag = R"shader(
+static std::string imagesHandsFrag = R"shader(
 #version 120
 
 varying vec3 out_position;
@@ -66,6 +173,7 @@ uniform sampler2D distortion;
 uniform float gamma;
 uniform float brightness;
 uniform bool use_stencil;
+uniform bool use_color;
 
 // screen
 uniform float view_x;
@@ -76,6 +184,22 @@ uniform float l00;
 uniform float l11;
 uniform float l03;
 uniform float opacity;
+
+float width = 672.0;
+float height = 600.0;
+float irscale = 1.0;
+
+float corr_ir_g = 0.1;
+float corr_ir_rb = 0.1;
+float corr_r_b = 0.2;
+float corr_g_rb = 0.2;
+
+float redShift = 0.44;
+float greenShift = 0;
+
+vec2 r_offset = vec2(-0.5, 0);
+vec2 g_offset = vec2(-0.5, 0.5);
+vec2 b_offset = vec2(0, 0.5);
 
 void main(void) {
   vec2 coord = gl_FragCoord.xy;
@@ -93,21 +217,111 @@ void main(void) {
 
   vec2 texCoord = texture2D(distortion, outTexCoord).xy;
 
-  gl_FragColor.rgb = brightness*vec3(pow(texture2D(texture, texCoord).r, gamma));
-  gl_FragColor.a = 1.0;
+  float iramt;
+  if (use_color) {
+    float dx = 1.0/width;
+    float dy = 1.0/height;
+
+    float rscale = brightness*(1.0 + redShift - 0.5*greenShift);
+    float gscale = brightness*(1.0 + greenShift);
+    float bscale = brightness*(1.0 - redShift - 0.5*greenShift);
+   
+    vec2 redOffset = vec2(dx, dy)*r_offset;
+    vec2 greenOffset = vec2(dx, dy)*g_offset;
+    vec2 blueOffset = vec2(dx, dy)*b_offset;
+
+    float ir_lf = texture2D(texture, texCoord).a;
+    float ir_l = texture2D(texture, texCoord + vec2(-dx, 0)).a;
+    float ir_t = texture2D(texture, texCoord + vec2(0, -dy)).a;
+    float ir_r = texture2D(texture, texCoord + vec2(dx, 0)).a;
+    float ir_b = texture2D(texture, texCoord + vec2(0, dy)).a;
+    float ir_hf = ir_lf - 0.25*(ir_l + ir_t + ir_r + ir_b);
+
+    float r_lf = texture2D(texture, texCoord + redOffset).b;
+    float r_l = texture2D(texture, texCoord + redOffset + vec2(-dx, 0)).b;
+    float r_t = texture2D(texture, texCoord + redOffset + vec2(0, -dy)).b;
+    float r_r = texture2D(texture, texCoord + redOffset + vec2(dx, 0)).b;
+    float r_b = texture2D(texture, texCoord + redOffset + vec2(0, dy)).b;
+    float r_hf = r_lf - 0.25*(r_l + r_t + r_r + r_b);
+
+    float g_lf = texture2D(texture, texCoord + greenOffset).r;
+    float g_l = texture2D(texture, texCoord + greenOffset + vec2(-dx, 0)).r;
+    float g_t = texture2D(texture, texCoord + greenOffset + vec2(0, -dy)).r;
+    float g_r = texture2D(texture, texCoord + greenOffset + vec2(dx, 0)).r;
+    float g_b = texture2D(texture, texCoord + greenOffset + vec2(0, dy)).r;
+    float g_hf = g_lf - 0.25*(g_l + g_t + g_r + g_b);
+
+    float b_lf = texture2D(texture, texCoord + blueOffset).g;
+    float b_l = texture2D(texture, texCoord + blueOffset + vec2(-dx, 0)).g;
+    float b_t = texture2D(texture, texCoord + blueOffset + vec2(0, -dy)).g;
+    float b_r = texture2D(texture, texCoord + blueOffset + vec2(dx, 0)).g;
+    float b_b = texture2D(texture, texCoord + blueOffset + vec2(0, dy)).g;
+    float b_hf = b_lf - 0.25*(b_l + b_t + b_r + b_b);
+    
+    const mat4 transformation = mat4(5.6220, -1.5456, 0.3634, -0.1106, -1.6410, 3.1944, -1.7204, 0.0189, 0.1410, 0.4896, 10.8399, -0.1053, -3.7440, -1.9080, -8.6066, 1.0000);
+    const mat4 conservative = mat4(5.6220, 0.0000, 0.3634, 0.0000, 0.0000, 3.1944, 0.0000, 0.0189, 0.1410, 0.4896, 10.8399, 0.0000, 0.0000, 0.0000, 0.0000, 1.0000);
+
+    const mat4 transformation_filtered = mat4(5.0670, -1.2312, 0.8625, -0.0507, -1.5210, 3.1104, -2.0194, 0.0017, -0.8310, -0.3000, 13.1744, -0.1052, -2.4540, -1.3848, -10.9618, 1.0000);
+    const mat4 conservative_filtered = mat4(5.0670, 0.0000, 0.8625, 0.0000, 0.0000, 3.1104, 0.0000, 0.0017, 0.0000, 0.0000, 13.1744, 0.0000, 0.0000, 0.0000, 0.0000, 1.0000);
+
+    vec4 input_lf = vec4(r_lf, g_lf, b_lf, ir_lf);
+
+    input_lf.r += ir_hf*corr_ir_rb + g_hf*corr_g_rb + b_hf*corr_r_b;
+    input_lf.g += ir_hf*corr_ir_g + r_hf*corr_g_rb + b_hf*corr_g_rb;
+    input_lf.b += ir_hf*corr_ir_rb + r_hf*corr_r_b + g_hf*corr_g_rb;
+
+    vec4 output_lf, output_lf_fudge;
+    output_lf = transformation*input_lf;
+    output_lf_fudge = conservative*input_lf;
+
+    float fudge_threshold = 0.5;
+    float ir_fudge_threshold = 0.95;
+    float ir_fudge_factor = 0.333*(r_lf + g_lf + b_lf);
+
+    float rfudge = r_lf > fudge_threshold ? (r_lf - fudge_threshold)/(1.0 - fudge_threshold) : 0;
+    float gfudge = g_lf > fudge_threshold ? (g_lf - fudge_threshold)/(1.0 - fudge_threshold) : 0;
+    float bfudge = b_lf > fudge_threshold ? (b_lf - fudge_threshold)/(1.0 - fudge_threshold) : 0;
+    float irfudge = ir_fudge_factor > ir_fudge_threshold ? (ir_fudge_factor - ir_fudge_threshold)/(1.0 - ir_fudge_threshold) : 0;
+    rfudge *= rfudge;
+    gfudge *= gfudge;
+    bfudge *= bfudge;
+    irfudge *= irfudge;
+
+    gl_FragColor.r = rfudge*output_lf_fudge.r + (1-rfudge)*output_lf.r;
+    gl_FragColor.g = gfudge*output_lf_fudge.g + (1-gfudge)*output_lf.g;
+    gl_FragColor.b = bfudge*output_lf_fudge.b + (1-bfudge)*output_lf.b;
+    float ir_out = irfudge*output_lf_fudge.a + (1-irfudge)*output_lf.a;
+
+    gl_FragColor.r *= rscale;
+    gl_FragColor.g *= gscale;
+    gl_FragColor.b *= bscale;
+    ir_out *= irscale;
+
+    iramt = smoothstep(0.0, 1.0, pow(clamp((ir_out-0.01)*10, 0.0, 1.0), gamma));
+
+    gl_FragColor.rgb = pow(gl_FragColor.rgb, vec3(gamma));
+    gl_FragColor.a = 1.0;
+  } else {
+    gl_FragColor.rgb = brightness*vec3(pow(texture2D(texture, texCoord).r, gamma));
+    gl_FragColor.a = 1.0;
+  }
 
   if (use_stencil) {
     float value = gl_FragColor.r;
+    if (use_color) { 
+      value = iramt;
+    }
 
-    float offset1 = 0.175;
-    float offset2 = 0.35;
-    float falloff = 0.15;
+    float offset1 = 0.01;
+    float offset2 = 0.3;
+    float falloff = 0.5;
 
-    vec3 glowColor = vec3(0.6, 0.85, 1.0);
+    vec3 glowColor = vec3(0.7, 0.9, 1.0);
     if (value < offset1) {
       gl_FragColor.a = 0.0;
     } else if (value >= offset1 && value <= offset2) {
-      float fade = smoothstep(0.0, 1.0, (value - offset1)/(offset2 - offset1));
+      float ratio = (value - offset1)/(offset2 - offset1);
+      float fade = smoothstep(0.0, 1.0, ratio);
       gl_FragColor.rgb = glowColor;
       gl_FragColor.a = fade*opacity;
     } else {
@@ -118,6 +332,13 @@ void main(void) {
       gl_FragColor.a = opacity*alpha;
     }
   }
+  
+  vec3 eye = normalize(-out_position);
+  vec3 normal = normalize(out_normal);
+  float edgeMult = dot(normal, eye);
+
+  gl_FragColor.a *= (edgeMult * edgeMult);
+
 }
 )shader";
 

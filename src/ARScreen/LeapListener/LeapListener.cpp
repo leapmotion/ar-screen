@@ -30,8 +30,9 @@ void LeapListener::onInit(const Leap::Controller& controller) {
 
 void LeapListener::onConnect(const Leap::Controller& controller) {
   std::unique_lock<std::mutex> lock(m_mutex);
-  // TODO: turn this into something configurable
-  controller.setPolicyFlags(Leap::Controller::POLICY_BACKGROUND_FRAMES);
+  controller.setPolicy(Leap::Controller::POLICY_OPTIMIZE_HMD);
+  controller.setPolicy(Leap::Controller::POLICY_BACKGROUND_FRAMES);
+  controller.setPolicy(Leap::Controller::POLICY_IMAGES);
   controller.enableGesture(Leap::Gesture::TYPE_SCREEN_TAP);
   controller.enableGesture(Leap::Gesture::TYPE_KEY_TAP);
   controller.enableGesture(Leap::Gesture::TYPE_CIRCLE);
@@ -52,7 +53,6 @@ void LeapListener::onFocusGained(const Leap::Controller& controller) {
 
   m_accumulatedFrames.clear();
   m_mostRecentFrame = Leap::Frame();
-  // TODO (?) track an "is focused" flag?
 }
 
 void LeapListener::onFocusLost(const Leap::Controller& controller) {
@@ -60,25 +60,11 @@ void LeapListener::onFocusLost(const Leap::Controller& controller) {
 
   m_accumulatedFrames.clear();
   m_mostRecentFrame = Leap::Frame();
-  // TODO (?) track an "is focused" flag?
 }
 
 void LeapListener::onFrame(const Leap::Controller& controller) {
   std::unique_lock<std::mutex> lock(m_mutex);
 
-  if (m_mostRecentFrame.isValid()) {
-    int history = 0;
-
-    // Find historical frames that we are missing
-    while (controller.frame(++history).id() > m_mostRecentFrame.id()) {
-      ;;
-    }
-    // Add those historical frames to our deque
-    while (--history > 0) {
-      m_accumulatedFrames.push_back(controller.frame(history));
-    }
-  }
   m_mostRecentFrame = controller.frame();
   m_accumulatedFrames.push_back(m_mostRecentFrame);
 }
-

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <stdexcept>
 #include "Globals.h"
+#include "Utilities.h"
 
 int main(int argc, char **argv)
 {
@@ -44,6 +45,9 @@ void ARScreen::Main(void) {
   CurrentContextPusher pshr(arScreenCtxt);
 
   WindowParams params;
+  params.antialias = true;
+  params.vsync = false;
+  params.fullscreen = true;
   m_Window.Init(params);
   if (glewInit() != GLEW_OK) {
     throw std::runtime_error("Unable to initialize glew");
@@ -63,6 +67,7 @@ void ARScreen::Main(void) {
     m_Window.SetWindowSize(m_Oculus.GetHMDWidth(), m_Oculus.GetHMDHeight());
   }
 
+  m_Scene.Init();
   m_Controller.addListener(m_Listener);
 
   // Dispatch events until told to quit:
@@ -76,6 +81,10 @@ void ARScreen::Main(void) {
 
     Globals::curFrameTime = std::chrono::steady_clock::now();
     Globals::timeBetweenFrames = Globals::curFrameTime - Globals::prevFrameTime;
+
+    // Main operations
+    Update();
+    Render();
 
     Globals::prevFrameTime = Globals::curFrameTime;
   }
@@ -113,6 +122,61 @@ void ARScreen::HandleWindowEvents() {
   }
 }
 
+void ARScreen::Update() {
+  m_Scene.ProcessLeapFrames(m_Listener.TakeAccumulatedFrames());
+}
+
 void ARScreen::Render() {
+  glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // if using transparent window, clear alpha value must be 0
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  if (Globals::haveOculus) {
+    m_Oculus.DismissHealthWarning();
+
+    m_Oculus.BeginFrame();
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+#if 0
+    const float leapBaseline = 40.0f;
+#else
+    const float leapBaseline = 64.0f;
+#endif
+
+    const float OCULUS_BASELINE = 64.0f; // TODO: Get this value directly from the SDK
+
+    const EigenTypes::Matrix4x4f avgView = 0.5f*(m_Oculus.EyeView(0) + m_Oculus.EyeView(1));
+    EigenTypes::Matrix4x4f inputTransform = avgView.inverse();
+    EigenTypes::Matrix3x3f conventionConv;
+    conventionConv << -EigenTypes::Vector3f::UnitX(), -EigenTypes::Vector3f::UnitZ(), -EigenTypes::Vector3f::UnitY();
+#if 1
+    inputTransform.block<3, 3>(0, 0) *= (OCULUS_BASELINE / leapBaseline) * conventionConv;
+#else
+    inputTransform.block<3, 3>(0, 0) *= conventionConv;
+#endif
+
+    EigenTypes::Matrix3x3 rotation = inputTransform.block<3, 3>(0, 0).cast<double>();
+    EigenTypes::Vector3 translation = inputTransform.block<3, 1>(0, 3).cast<double>();
+    m_Scene.SetInputTransform(rotation, translation);
+
+    for (int i=0; i<2; i++) {
+      const ovrRecti& rect = m_Oculus.EyeViewport(i);
+      const Eigen::Matrix4f proj = m_Oculus.EyeProjection(i);
+      Eigen::Matrix4f view = m_Oculus.EyeView(i);
+      const Eigen::Vector3f pos = m_Oculus.EyePosition(i);
+
+      glViewport(rect.Pos.x, rect.Pos.y, rect.Size.w, rect.Size.h);
+
+      m_Scene.Render(proj, view, i);
+    }
+
+    m_Oculus.EndFrame();
+  } else {
+    //m_earthLayer->Render(real_time_delta);
+
+
+    glFlush();
+    m_Window.Present();
+  }
 
 }

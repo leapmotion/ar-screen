@@ -21,7 +21,6 @@ public:
   const Leap::Frame &MostRecentFrame() const;
   std::deque<Leap::Frame> TakeAccumulatedFrames();
 
-
   virtual void onInit(const Leap::Controller&);
   virtual void onConnect(const Leap::Controller&);
   virtual void onDisconnect(const Leap::Controller&);

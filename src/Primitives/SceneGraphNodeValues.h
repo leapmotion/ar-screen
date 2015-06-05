@@ -2,7 +2,7 @@
 
 // #include <algorithm>
 #include <Eigen/Geometry>
-#include "EigenTypes.h"
+#include "utility/EigenTypes.h"
 #include <ostream>
 #include "SceneGraphNodeProperties.h"
 #include <sstream>

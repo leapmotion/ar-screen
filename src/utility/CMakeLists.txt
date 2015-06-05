@@ -1,6 +1,12 @@
 
 set(utility_SOURCES
+  Animation.h
+  EigenTypes.h
   PlatformInitializer.h
+  SamplePrimitives.h
+  SamplePrimitives.cpp
+  Shaders.h
+  Utilities.h
 )
 
 add_windows_sources(utility_SOURCES
@@ -20,7 +26,7 @@ add_pch(utility_SOURCES "stdafx.h" "stdafx.cpp")
 
 add_library(utility ${utility_SOURCES})
 set_property(TARGET utility PROPERTY FOLDER "Common")
-target_link_libraries(utility Autowiring::Autowiring)
+target_link_libraries(utility LeapGL Autowiring::Autowiring Eigen::Eigen)
 
 if(MSVC)
   target_link_libraries(utility shlwapi)

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "EigenTypes.h"
+#include "utility/EigenTypes.h"
 #include "Leap/GL/GLHeaders.h"
 #include "Leap/GL/Rgba.h"
 #include "Leap/GL/ShaderFrontend.h"

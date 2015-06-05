@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "ImagePassthrough.h"
-#include "Shaders.h"
+#include "utility/Shaders.h"
 
 ImagePassthrough::ImagePassthrough() :
   m_ActiveTexture(0),

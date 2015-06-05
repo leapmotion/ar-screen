@@ -120,7 +120,7 @@ public:
     MakeAdditionalModelViewTransformations(model_view);
 
     ShaderBindingScopeGuard bso(Shader(), BindFlags::BIND_AND_UNBIND); // binds shader now, unbinds upon end of scope.
-    
+
     m_material->UploadUniforms();
     m_shader_matrices->UploadUniforms(model_view.Matrix(), render_state.ProjectionMatrix());
 
@@ -142,7 +142,7 @@ protected:
   void ManuallySetMatricesAndUploadMatrixUniforms (const EigenTypes::Matrix4x4 &model_view, const EigenTypes::Matrix4x4 &projection) const {
     m_shader_matrices->UploadUniforms(model_view, projection);
   }
-  
+
 private:
 
   std::shared_ptr<Leap::GL::Shader> m_shader;

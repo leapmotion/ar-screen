@@ -1,7 +1,7 @@
 #pragma once
 
 #include <algorithm>
-#include "EigenTypes.h"
+#include "utility/EigenTypes.h"
 #include "Leap/GL/ModelView.h"
 #include "Leap/GL/Projection.h"
 #include <memory>

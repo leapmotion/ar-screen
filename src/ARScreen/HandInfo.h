@@ -1,11 +1,11 @@
 #pragma once
 
-#include "EigenTypes.h"
-#include "RenderState.h"
-#include "Primitives.h"
-#include "Animation.h"
-#include "Utilities.h"
 #include "ImagePassthrough.h"
+#include "Primitives/RenderState.h"
+#include "Primitives/Primitives.h"
+#include "utility/EigenTypes.h"
+#include "utility/Animation.h"
+#include "utility/Utilities.h"
 
 class HandInfo {
 public:

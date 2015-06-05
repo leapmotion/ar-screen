@@ -1,7 +1,7 @@
 #pragma once
 #include <autowiring/autowiring.h>
-#include "LeapListener.h"
-#include "OculusVR.h"
+#include "LeapListener/LeapListener.h"
+#include "OculusVR/OculusVR.h"
 #include "Window.h"
 #include "Scene.h"
 

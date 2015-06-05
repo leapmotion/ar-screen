@@ -1,9 +1,8 @@
 #pragma once
 
-#include "Primitives.h"
-//#include "GLTexture2Image.h"
+#include "Primitives/Primitives.h"
 #include "Leap/GL/Texture2.h"
-#include "LeapListener.h"
+#include "LeapListener/LeapListener.h"
 
 class ImagePassthrough {
 public:

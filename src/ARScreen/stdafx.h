@@ -61,9 +61,3 @@
 // eigen
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
-
-// nanosvg
-#include <nanosvg.h>
-
-// polypartition
-#include <polypartition.h>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "EigenTypes.h"
+#include "utility/EigenTypes.h"
 
 namespace Leap {
 namespace GL {

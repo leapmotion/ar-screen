@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Scene.h"
-#include "Projection.h"
+#include "Leap/GL/Projection.h"
 
 void Scene::Init() {
   m_InputRotation = EigenTypes::Matrix3x3::Identity();

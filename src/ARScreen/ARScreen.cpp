@@ -1,10 +1,11 @@
 #include "stdafx.h"
 #include "ARScreen.h"
+#include "Globals.h"
 #include "utility/PlatformInitializer.h"
+#include "utility/Utilities.h"
+
 #include <iostream>
 #include <stdexcept>
-#include "Globals.h"
-#include "Utilities.h"
 
 int main(int argc, char **argv)
 {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "EigenTypes.h"
+#include "utility/EigenTypes.h"
 #include <memory>
 #include "SceneGraphNodeProperties.h"
 #include <unordered_set>
@@ -14,7 +14,7 @@
 // Design for parent-to-child property propagation
 // -----------------------------------------------
 // A scene graph node will have a set of properties.  Let P denote a set of properties,
-// and let SGN<P> denote the scene graph node type having properties P.  Every node in 
+// and let SGN<P> denote the scene graph node type having properties P.  Every node in
 // a scene graph tree must have the same set of properties (i.e. the node type in a scene
 // graph must be uniform).
 //
@@ -43,7 +43,7 @@
 //       A                   "A"             "/A"                1.0              1.0
 //        \    '
 //         B                 "B"             "/A/B"              0.8              0.8
-//        / 
+//        /
 //       C                   "C"             "/A/B/C"            0.7              0.56
 //
 // The property "delta" from a node N's ancestor A to itself can be defined to be the application
@@ -161,8 +161,8 @@ public:
     }
   }
 
-  // // Traverse this tree, depth-first, calling preTraversal (if not nullptr) 
-  // // on this node, then calling this function recursively on the child nodes, then 
+  // // Traverse this tree, depth-first, calling preTraversal (if not nullptr)
+  // // on this node, then calling this function recursively on the child nodes, then
   // // calling postTraversal (if not nullptr) on this node.
   // template<class _FnPre, class _FnPost>
   // void DepthFirstTraverse(_FnPre preTraversal, _FnPost postTraversal) {
@@ -266,7 +266,7 @@ public:
     this_properties_stack.Apply(other_properties_stack, Operate::ON_LEFT);
     return this_properties_stack;
   }
-  
+
   // // This computes the transformation taking points in this node's coordinate
   // // system and produces those points expressed in the coordinate system of
   // // the other node.
@@ -276,7 +276,7 @@ public:
   // Transform ComputeTransformToCoordinatesOf (const SceneGraphNode &other) const {
   //   auto closest_common_ancestor = ClosestCommonAncestor(other);
 
-  //   // Compute the transformation from this node's coordinate system to the 
+  //   // Compute the transformation from this node's coordinate system to the
   //   // common ancestor's.  For convenience in later comments, call this A.
   //   Transform this_transform_stack;
   //   this_transform_stack.setIdentity();
@@ -319,7 +319,7 @@ public:
   // Transform ComputeTransformToGlobalCoordinates() const {
   //   return ComputeTransformToCoordinatesOf(*RootNode());
   // }
-  
+
   // Transform ComputeTransformFromGlobalCoordinates() const {
   //   return RootNode()->ComputeTransformToCoordinatesOf(*this);
   // }
@@ -357,10 +357,10 @@ private:
   // //Silly function call wrapper that allows you to also pass nullptr as a function if you want.
   // template<class _Fn, typename... _Args>
   // static void CallFunction(_Fn function, _Args&& ... args) { function(args...); }
-  
+
   // template<typename... _Args>
   // static void CallFunction(std::nullptr_t, _Args&&...) {}
-  
+
   // This populates a vector with the ancestors of this node, starting with this node,
   // then its parent, then its parent's parent, etc (i.e. this node, going toward the root).
   void AppendAncestors (std::vector<std::shared_ptr<const SceneGraphNode>> &ancestors) const {

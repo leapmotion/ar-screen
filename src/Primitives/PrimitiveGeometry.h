@@ -1,6 +1,6 @@
 #pragma once
 
-#include "EigenTypes.h"
+#include "utility/EigenTypes.h"
 #include "Leap/GL/BufferObject.h"
 #include "Leap/GL/Mesh.h"
 #include "Leap/GL/MeshAssembler.h"

@@ -21,6 +21,8 @@ set(ARScreen_SOURCES
   Scene.cpp
   Window.cpp
   Window.h
+  WindowManager.h
+  WindowManager.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/Version.h
 )
 

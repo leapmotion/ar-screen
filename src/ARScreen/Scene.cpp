@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Scene.h"
 #include "Leap/GL/Projection.h"
+#include "WindowManager.h"
 
 void Scene::Init() {
   m_InputRotation = EigenTypes::Matrix3x3::Identity();
@@ -66,6 +67,14 @@ void Scene::Render(const Eigen::Matrix4f& proj, const Eigen::Matrix4f& view, int
   // draw scene here
   PrimitiveBase::DrawSceneGraph(*m_Text, m_Renderer);
   m_Text->Translation().x() = -0.5f*m_Text->Size().x();
+
+  Autowired<WindowManager> manager;
+  if (manager) {
+    for (const auto& it : manager->m_Windows) {
+      std::cout << "draw" << std::endl;
+      PrimitiveBase::DrawSceneGraph(*it.second->m_Texture, m_Renderer);
+    }
+  }
 
   m_Renderer.GetModelView().Matrix().setIdentity();
   glDisable(GL_DEPTH_TEST);

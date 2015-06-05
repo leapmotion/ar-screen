@@ -28,6 +28,8 @@ if(MSVC)
   find_library(Freetype-gl_LIBRARY_RELEASE "freetype-gl.lib" HINTS "${Freetype-gl_ROOT_DIR}" PATH_SUFFIXES lib)
   find_library(Freetype-gl_LIBRARY_DEBUG "freetype-gl-d.lib" HINTS "${Freetype-gl_ROOT_DIR}" PATH_SUFFIXES lib)
 else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  find_library(Freetype-gl_LIBRARY_RELEASE "libfreetype-gl.a" HINTS "${Freetype-gl_ROOT_DIR}" PATH_SUFFIXES lib)
+  find_library(Freetype-gl_LIBRARY_DEBUG "libfreetype-gl.a" HINTS "${Freetype-gl_ROOT_DIR}" PATH_SUFFIXES lib)
   #todo
 endif()
 include(SelectConfigurations)
@@ -39,4 +41,3 @@ find_package_handle_standard_args(Freetype-gl DEFAULT_MSG Freetype-gl_ROOT_DIR F
 include(CreateImportTargetHelpers)
 
 generate_import_target(Freetype-gl STATIC)
-

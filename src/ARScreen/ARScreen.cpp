@@ -60,12 +60,10 @@ void ARScreen::Main(void) {
   }
   FreeImage_Initialise();
 
-#if _WIN32
-  m_Oculus.SetWindow(m_Window.GetHWND());
-#endif
+  m_Oculus.SetWindow(static_cast<OculusVR::WindowHandle>(m_Window.GetWindowHandle()));
   if (!m_Oculus.Init()) {
     Globals::haveOculus = false;
-    std::cout << "No oculus detected" << std::endl;
+    std::cout << "No Oculus detected" << std::endl;
   } else {
     Globals::haveOculus = true;
     const ovrVector2i windowsPos = m_Oculus.GetWindowsPos();

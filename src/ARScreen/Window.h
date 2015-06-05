@@ -35,16 +35,10 @@ public:
   void SetWindowSize(int width, int height);
   void SetWindowPos(int x, int y);
 
-#if _WIN32
-  HWND GetHWND() { return m_HWND; }
-#endif
+  sf::WindowHandle GetWindowHandle() const { return m_Window.getSystemHandle(); }
 
 private:
   sf::ContextSettings m_Settings;
   mutable sf::Window m_Window;
-  sf::WindowHandle m_WindowHandle;
   WindowParams m_Params;
-#if _WIN32
-  HWND m_HWND;
-#endif
 };

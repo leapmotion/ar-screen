@@ -27,11 +27,6 @@ void Window::Init(const WindowParams& params) {
   m_Window.setVisible(false);
   m_Window.setVerticalSyncEnabled(m_Params.vsync);
   m_Window.setPosition(sf::Vector2i(m_Params.windowPosX, m_Params.windowPosY));
-
-  m_WindowHandle = m_Window.getSystemHandle();
-#if _WIN32
-  m_HWND = static_cast<HWND>(m_WindowHandle);
-#endif
   m_Window.setVisible(true);
 }
 

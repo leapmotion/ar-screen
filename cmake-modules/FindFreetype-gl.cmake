@@ -30,7 +30,6 @@ if(MSVC)
 else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   find_library(Freetype-gl_LIBRARY_RELEASE "libfreetype-gl.a" HINTS "${Freetype-gl_ROOT_DIR}" PATH_SUFFIXES lib)
   find_library(Freetype-gl_LIBRARY_DEBUG "libfreetype-gl.a" HINTS "${Freetype-gl_ROOT_DIR}" PATH_SUFFIXES lib)
-  #todo
 endif()
 include(SelectConfigurations)
 select_configurations(Freetype-gl LIBRARY LIBRARIES)

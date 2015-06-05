@@ -34,14 +34,13 @@ if(MSVC)
   endif()
 
   find_library(Leap_IMPORT_LIB_RELEASE "Leap.lib" HINTS "${Leap_ROOT_DIR}/lib/${_bit_suffix}")
-  find_library(Leap_IMPORT_LIB_DEBUG "Leapd.lib" HINTS "${Leap_ROOT_DIR}/lib/${_bit_suffix}")
+  find_library(Leap_IMPORT_LIB_DEBUG "Leap.lib" HINTS "${Leap_ROOT_DIR}/lib/${_bit_suffix}")
 
   find_file(Leap_LIBRARY_RELEASE
             NAMES Leap.dll
             HINTS "${Leap_ROOT_DIR}/lib/x86")
   find_file(Leap_LIBRARY_DEBUG
-            NAMES Leapd.dll
-                  Leap.dll #fallback on the release library if we must
+            NAMES Leap.dll
             HINTS "${Leap_ROOT_DIR}/lib/x86")
   mark_as_advanced(Leap_IMPORT_LIB_RELEASE Leap_IMPORT_LIB_DEBUG)
 else()

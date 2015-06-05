@@ -50,20 +50,16 @@ add_mac_sources(
 add_library(OSInterface ${OSInterface_SOURCES})
 set_property(TARGET OSInterface PROPERTY FOLDER "Common")
 
-target_link_libraries(OSInterface PUBLIC Autowiring utility)
+target_link_libraries(OSInterface PUBLIC utility Primitives LeapGL Autowiring::Autowiring)
 target_package(OSInterface Leap REQUIRED LINK_TYPE PUBLIC)
 target_package(OSInterface Glew REQUIRED LINK_TYPE PUBLIC)
-
-target_link_libraries(OSInterface PUBLIC Primitives Animation)
 
 if(APPLE)
   find_library(FOUNDATION_FRAMEWORK Foundation)
   find_library(APPKIT_FRAMEWORK AppKit)
-  find_library(CORE_AUDIO_FRAMEWORK CoreAudio)
   mark_as_advanced(FOUNDATION_FRAMEWORK)
   mark_as_advanced(APPKIT_FRAMEWORK)
-  mark_as_advanced(CORE_AUDIO_FRAMEWORK)
-  target_link_libraries(OSInterface PUBLIC ${CORE_AUDIO_FRAMEWORK} ${APPKIT_FRAMEWORK} ${FOUNDATION_FRAMEWORK})
+  target_link_libraries(OSInterface PUBLIC ${APPKIT_FRAMEWORK} ${FOUNDATION_FRAMEWORK})
 endif()
 
 if(MSVC)

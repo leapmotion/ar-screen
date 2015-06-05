@@ -10,6 +10,11 @@ set(ARScreen_SOURCES
   ARScreen.cpp
   ARScreen.h
   EigenTypes.h
+  Globals.cpp
+  Globals.h
+  ImagePassthrough.cpp
+  ImagePassthrough.h
+  Shaders.h
   Window.cpp
   Window.h
   ${CMAKE_CURRENT_BINARY_DIR}/Version.h

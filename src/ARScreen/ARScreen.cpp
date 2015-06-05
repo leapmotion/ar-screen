@@ -3,6 +3,7 @@
 #include "utility/PlatformInitializer.h"
 #include <iostream>
 #include <stdexcept>
+#include "Globals.h"
 
 int main(int argc, char **argv)
 {
@@ -49,14 +50,34 @@ void ARScreen::Main(void) {
   }
   FreeImage_Initialise();
 
+#if _WIN32
+  m_Oculus.SetWindow(m_Window.GetHWND());
+#endif
+  if (!m_Oculus.Init()) {
+    Globals::haveOculus = false;
+    std::cout << "No oculus detected" << std::endl;
+  } else {
+    Globals::haveOculus = true;
+    const ovrVector2i windowsPos = m_Oculus.GetWindowsPos();
+    m_Window.SetWindowPos(windowsPos.x, windowsPos.y);
+    m_Window.SetWindowSize(m_Oculus.GetHMDWidth(), m_Oculus.GetHMDHeight());
+  }
+
+  m_Controller.addListener(m_Listener);
+
   // Dispatch events until told to quit:
-  auto then = std::chrono::steady_clock::now();
+  Globals::prevFrameTime = std::chrono::steady_clock::now();
   for(AutoCurrentContext ctxt; !ctxt->IsShutdown(); ) {
     // Handle autowiring events:
     DispatchAllEvents();
 
     // Handle SFML events
     HandleWindowEvents();
+
+    Globals::curFrameTime = std::chrono::steady_clock::now();
+    Globals::timeBetweenFrames = Globals::curFrameTime - Globals::prevFrameTime;
+
+    Globals::prevFrameTime = Globals::curFrameTime;
   }
 }
 
@@ -90,4 +111,8 @@ void ARScreen::HandleWindowEvents() {
 
     }
   }
+}
+
+void ARScreen::Render() {
+
 }

@@ -2,6 +2,7 @@
 #include "TextureFont.h"
 #include <algorithm>
 #include <assert.h>
+#include <cfloat>
 
 static const std::wstring SUPPORTED_GLYPHS = L" !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
 

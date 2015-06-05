@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "Leap/GL/ModelView.h"
 
 namespace Leap {

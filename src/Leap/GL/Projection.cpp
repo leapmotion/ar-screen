@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include <cassert>
 #include <cmath>
 #include "Leap/GL/Projection.h"

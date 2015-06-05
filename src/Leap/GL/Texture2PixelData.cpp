@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "Leap/GL/Texture2PixelData.h"
 
 #include <cassert>

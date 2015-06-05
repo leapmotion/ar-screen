@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "Leap/GL/Shader.h"
 
 // #include <iostream> // TEMP

@@ -52,4 +52,5 @@ target_link_libraries(LeapGL
   Glew::Glew
   OpenGL::OpenGL
   Eigen::Eigen
+  FreeImage::FreeImage
 )

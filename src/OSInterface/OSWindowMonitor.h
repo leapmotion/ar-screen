@@ -1,5 +1,6 @@
 #pragma once
 #include "OSGeometry.h"
+#include "utility/Updatable.h"
 #include <functional>
 
 class OSWindow;
@@ -11,7 +12,8 @@ class OSWindow;
 /// This type describes the circumstances under which important events are raised
 /// </seealso>
 class OSWindowMonitor:
-  public ContextMember
+  public ContextMember,
+  public Updatable
 {
 public:
   OSWindowMonitor(void);
@@ -19,10 +21,17 @@ public:
 
   static OSWindowMonitor* New(void);
 
+
+protected:
   /// <summary>
   /// Routine to scan and update the window list
   /// </summary>
+  /// </remarks>
+  /// Called periodically from within the Tick() method
+  /// </remarks>
   virtual void Scan(void) = 0;
+
+  bool m_scanEnabled = false;
 
 public:
   /// <summary>
@@ -38,4 +47,9 @@ public:
   /// method may potentially result in an OnCreate event being raised
   /// </remarks>
   virtual std::shared_ptr<OSWindow> WindowFromPoint(OSPoint point) = 0;
+
+  void EnableScan(bool scan) { m_scanEnabled = scan; }
+
+  // Updatable overrides:
+  void Tick(std::chrono::duration<double> deltaT) override;
 };

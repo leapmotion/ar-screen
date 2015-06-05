@@ -6,6 +6,7 @@ set(utility_SOURCES
   SamplePrimitives.h
   SamplePrimitives.cpp
   Shaders.h
+  Updatable.h
   Utilities.h
 )
 

@@ -11,3 +11,9 @@ OSWindowMonitor::OSWindowMonitor(void):
 OSWindowMonitor::~OSWindowMonitor(void)
 {
 }
+
+void OSWindowMonitor::Tick(std::chrono::duration<double> deltaT) {
+  if (m_scanEnabled) {
+    Scan();
+  }
+}

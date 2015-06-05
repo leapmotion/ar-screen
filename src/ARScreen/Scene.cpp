@@ -9,19 +9,11 @@ void Scene::Init() {
   m_ImagePassthrough = std::shared_ptr<ImagePassthrough>(new ImagePassthrough());
   m_ImagePassthrough->Init();
 
-#if 0
-  m_font = std::shared_ptr<TextureFont>(new TextureFont(100.0f, "fonts/Roboto-Regular.ttf", 1024, 1024));
-  const std::shared_ptr<Cities>& cities = m_Earth->GetCities();
-  const int numCities = cities->GetNumCities();
-  std::wstring cityNames = L"";
-  for (int i=0; i<numCities; i++) {
-    cityNames = cityNames + cities->GetCity(i).name;
-  }
-  m_font->Load(cityNames);
+  m_Font = std::shared_ptr<TextureFont>(new TextureFont(100.0f, "fonts/Roboto-Regular.ttf", 1024, 1024));
+  m_Font->Load();
 
-  m_text = std::shared_ptr<TextPrimitive>(new TextPrimitive());
-  m_text->SetText(L" ", m_font);
-#endif
+  m_Text = std::shared_ptr<TextPrimitive>(new TextPrimitive());
+  m_Text->SetText(L" ", m_Font);
 }
 
 void Scene::SetInputTransform(const EigenTypes::Matrix3x3& rotation, const EigenTypes::Vector3& translation) {
@@ -29,7 +21,7 @@ void Scene::SetInputTransform(const EigenTypes::Matrix3x3& rotation, const Eigen
   m_InputTranslation = translation;
 }
 
-void Scene::ProcessLeapFrames(const std::deque<Leap::Frame>& frames) {
+void Scene::Update(const std::deque<Leap::Frame>& frames) {
   for (size_t i = 0; i < frames.size(); i++) {
     Leap::Frame prevFrame = m_CurFrame;
     const double prevTimeSeconds = timestampToSeconds(prevFrame.timestamp());
@@ -46,6 +38,13 @@ void Scene::ProcessLeapFrames(const std::deque<Leap::Frame>& frames) {
 
   if (!frames.empty()) {
     m_ImagePassthrough->Update(frames.back().images());
+  }
+
+  const std::string timeStr = getTimeString(-7);
+  const std::wstring timeStrW(timeStr.begin(), timeStr.end());
+  if (timeStrW != m_ClockString) {
+    m_Text->SetText(timeStrW, m_Font);
+    m_ClockString = timeStrW;
   }
 }
 
@@ -65,6 +64,8 @@ void Scene::Render(const Eigen::Matrix4f& proj, const Eigen::Matrix4f& view, int
   m_Renderer.GetModelView().Matrix() = view.cast<double>();
 
   // draw scene here
+  PrimitiveBase::DrawSceneGraph(*m_Text, m_Renderer);
+  m_Text->Translation().x() = -0.5f*m_Text->Size().x();
 
   m_Renderer.GetModelView().Matrix().setIdentity();
   glDisable(GL_DEPTH_TEST);

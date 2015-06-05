@@ -132,7 +132,7 @@ void ARScreen::HandleWindowEvents() {
 
 void ARScreen::Update() {
   m_update(&Updatable::Tick)(Globals::timeBetweenFrames);
-  m_Scene.ProcessLeapFrames(m_Listener.TakeAccumulatedFrames());
+  m_Scene.Update(m_Listener.TakeAccumulatedFrames());
 }
 
 void ARScreen::Render() {

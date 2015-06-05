@@ -38,7 +38,6 @@ set (LeapGL_SOURCES
   Leap/GL/Exception.h
   Leap/GL/GLHeaders.h
   Leap/GL/Internal/ColorComponent.h
-  Leap/GL/Internal/EigenTypes.h
   Leap/GL/Internal/Map.h
   Leap/GL/Internal/Meta.h
   Leap/GL/Internal/ShaderFrontend.h

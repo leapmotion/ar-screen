@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Leap/GL/Internal/EigenTypes.h"
+#include "EigenTypes.h"
 #include "Leap/GL/ShaderFrontend.h"
 
 namespace Leap {

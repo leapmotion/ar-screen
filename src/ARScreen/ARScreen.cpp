@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "ARScreen.h"
 #include "Globals.h"
+#include "OSInterface/AudioVolumeInterface.h"
+#include "OSInterface/MediaInterface.h"
 #include "OSInterface/OSVirtualScreen.h"
 #include "OSInterface/OSWindowMonitor.h"
 #include "utility/PlatformInitializer.h"
@@ -49,6 +51,8 @@ void ARScreen::Main(void) {
 
   AutoRequired<OSVirtualScreen>();
   AutoRequired<OSWindowMonitor>()->EnableScan(true);
+  AutoRequired<AudioVolumeInterface>();
+  AutoRequired<MediaInterface>();
 
   WindowParams params;
   params.antialias = true;

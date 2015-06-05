@@ -16,6 +16,7 @@ add_windows_sources(utility_SOURCES
   PlatformInitializerWin.cpp
   SingleInstanceEnforcerWin.h
   SingleInstanceEnforcerWin.cpp
+  WindowsIncludes.h
 )
 
 add_mac_sources(utility_SOURCES

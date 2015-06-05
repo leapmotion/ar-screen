@@ -3,11 +3,11 @@
 #include <autowiring/autowiring.h>
 
 #ifdef _MSC_VER
-  #include <Windows.h>
-
-  // nanosvg
-  #include <nanosvg.h>
-
-  // polypartition
-  #include <polypartition.h>
+  #include "utility/WindowsIncludes.h"
 #endif
+
+// nanosvg
+#include <nanosvg.h>
+
+// polypartition
+#include <polypartition.h>

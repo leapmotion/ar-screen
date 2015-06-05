@@ -22,16 +22,7 @@
 
 // windows-specific
 #ifdef _MSC_VER
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#include <Windows.h>
-#include <dwmapi.h>
-#undef min //WTF windows.h
-#undef max
+#include "utility/WindowsIncludes.h"
 #endif
 
 // opengl

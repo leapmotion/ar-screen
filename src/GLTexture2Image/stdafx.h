@@ -3,6 +3,8 @@
 #include <autowiring/autowiring.h>
 
 #ifdef _MSC_VER
-  #include <Windows.h>
-  #include "FreeImage.h"
+  #include "utility/WindowsIncludes.h"
 #endif
+
+#define FREEIMAGE_LIB
+#include "FreeImage.h"

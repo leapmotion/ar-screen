@@ -3,6 +3,5 @@
 #include <autowiring/autowiring.h>
 
 #ifdef _MSC_VER
-  #include <Windows.h>
-  #include <atlbase.h>
+  #include "utility/WindowsIncludes.h"
 #endif

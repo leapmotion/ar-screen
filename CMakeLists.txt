@@ -71,6 +71,7 @@ find_package(OculusSDK REQUIRED)
 find_package(OpenGL REQUIRED)
 set(SFML_STATIC_LIBRARIES TRUE)
 find_package(SFML 2.1 REQUIRED)
+find_package(Freetype-gl REQUIRED)
 
 include_directories(${CMAKE_BINARY_DIR})
 include_directories(src)

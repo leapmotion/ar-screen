@@ -1,4 +1,8 @@
 set(OSInterface_SOURCES
+  AudioVolumeInterface.h
+  AudioVolumeInterface.cpp
+  MediaInterface.h
+  MediaInterface.cpp
   OSApp.h
   OSAppManager.h
   OSAppManager.cpp
@@ -19,6 +23,10 @@ set(OSInterface_SOURCES
 
 add_windows_sources(
   OSInterface_SOURCES
+  AudioVolumeInterfaceWin.h
+  AudioVolumeInterfaceWin.cpp
+  MediaInterfaceWin.h
+  MediaInterfaceWin.cpp
   OSAppWin.h
   OSAppWin.cpp
   OSCursorWin.h
@@ -34,6 +42,10 @@ add_windows_sources(
 
 add_mac_sources(
   OSInterface_SOURCES
+  AudioVolumeInterfaceMac.h
+  AudioVolumeInterfaceMac.cpp
+  MediaInterfaceMac.h
+  MediaInterfaceMac.mm
   OSAppMac.h
   OSAppMac.mm
   OSCursorMac.h
@@ -57,9 +69,11 @@ target_package(OSInterface Glew REQUIRED LINK_TYPE PUBLIC)
 if(APPLE)
   find_library(FOUNDATION_FRAMEWORK Foundation)
   find_library(APPKIT_FRAMEWORK AppKit)
+  find_library(CORE_AUDIO_FRAMEWORK CoreAudio)
   mark_as_advanced(FOUNDATION_FRAMEWORK)
   mark_as_advanced(APPKIT_FRAMEWORK)
-  target_link_libraries(OSInterface PUBLIC ${APPKIT_FRAMEWORK} ${FOUNDATION_FRAMEWORK})
+  mark_as_advanced(CORE_AUDIO_FRAMEWORK)
+  target_link_libraries(OSInterface PUBLIC ${APPKIT_FRAMEWORK} ${FOUNDATION_FRAMEWORK} ${CORE_AUDIO_FRAMEWORK})
 endif()
 
 if(MSVC)

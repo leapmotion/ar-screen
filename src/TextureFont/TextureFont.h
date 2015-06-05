@@ -1,10 +1,8 @@
 #pragma once
 
-#include "Primitives.h"
+#include "Primitives/Primitives.h"
+#include "freetype-gl.h"
 #include <string>
-
-struct texture_font_t;
-struct texture_atlas_t;
 
 class TextureFont {
 public:

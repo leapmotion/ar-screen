@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Primitives.h"
+#include "Primitives/Primitives.h"
 #include "TextureFont.h"
 #include <string>
 #include <memory>

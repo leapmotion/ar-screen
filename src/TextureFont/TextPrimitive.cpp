@@ -1,4 +1,6 @@
+#include "stdafx.h"
 #include "TextPrimitive.h"
+#include "utility/Shaders.h"
 
 TextPrimitive::TextPrimitive() : m_size(EigenTypes::Vector2::Zero()), m_atlasID(0) { }
 
@@ -12,7 +14,7 @@ void TextPrimitive::SetText(const std::wstring& text, const std::shared_ptr<Text
   m_size << width, height;
   SetShader(getFontShader());
   Material().Uniform<AMBIENT_LIGHTING_PROPORTION>() = 1.0f;
-  Material().Uniform<AMBIENT_LIGHT_COLOR>() = Rgba<float>(1.0f);
+  Material().Uniform<AMBIENT_LIGHT_COLOR>() = Leap::GL::Rgba<float>(1.0f);
   Material().Uniform<TEXTURE_MAPPING_ENABLED>() = true;
 }
 
@@ -71,8 +73,7 @@ void main() {
 }
     )frag";
 
-    std::shared_ptr<TextFile> vert(new TextFile("matrix-transformed-vert.glsl"));
-    shader = std::shared_ptr<Leap::GL::Shader>(new Leap::GL::Shader(vert->Contents(), frag));
+    shader = std::shared_ptr<Leap::GL::Shader>(new Leap::GL::Shader(Shaders::transformedVert, frag));
   }
   return shader;
 }

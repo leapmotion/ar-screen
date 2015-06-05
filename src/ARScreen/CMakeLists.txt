@@ -24,12 +24,6 @@ set(ARScreen_SOURCES
   ${CMAKE_CURRENT_BINARY_DIR}/Version.h
 )
 
-set (TextureFont_SOURCES
-  TextPrimitive.cpp
-  TextPrimitive.h
-  TextureFont.cpp
-  TextureFont.h
-)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -60,7 +54,7 @@ target_link_libraries(ARScreen
   Leap::Leap
   SFML::SFML
   Eigen::Eigen
-  Freetype-gl::Freetype-gl
+  TextureFont
 )
 target_strip(ARScreen)
 

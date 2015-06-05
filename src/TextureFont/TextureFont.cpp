@@ -1,5 +1,5 @@
+#include "stdafx.h"
 #include "TextureFont.h"
-#include "freetype-gl.h"
 #include <algorithm>
 #include <assert.h>
 

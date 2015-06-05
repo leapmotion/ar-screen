@@ -53,3 +53,13 @@
 // freeimage
 #define FREEIMAGE_LIB
 #include <FreeImage.h>
+
+// eigen
+#include <Eigen/Dense>
+#include <Eigen/Geometry>
+
+// nanosvg
+#include <nanosvg.h>
+
+// polypartition
+#include <polypartition.h>

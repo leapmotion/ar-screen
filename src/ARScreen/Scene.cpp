@@ -16,6 +16,9 @@ void Scene::Init() {
 
   m_Text = std::shared_ptr<TextPrimitive>(new TextPrimitive());
   m_Text->SetText(L" ", m_Font);
+
+  m_MouseSphere = std::shared_ptr<Sphere>(new Sphere());
+
   createUI();
 }
 
@@ -66,17 +69,15 @@ void Scene::Render(const Eigen::Matrix4f& proj, const Eigen::Matrix4f& view, int
 
   m_Renderer.GetModelView().Matrix() = view.cast<double>();
 
-  // draw scene here
-  PrimitiveBase::DrawSceneGraph(*m_Text, m_Renderer);
-  m_Text->Translation().x() = -0.5f*m_Text->Size().x();
+  drawClock();
 
   Autowired<WindowManager> manager;
   if (manager) {
     for (const auto& it : manager->m_Windows) {
-      std::cout << "draw" << std::endl;
       PrimitiveBase::DrawSceneGraph(*it.second->m_Texture, m_Renderer);
     }
   }
+  drawFakeMouse();
   drawUI();
 
   m_Renderer.GetModelView().Matrix().setIdentity();
@@ -145,6 +146,54 @@ void Scene::drawHands() const {
     const HandInfo& trackedHand = *element.second;
     trackedHand.DrawCapsuleHand(m_Renderer, m_InputRotation, m_InputTranslation, m_ImagePassthrough.get());
   }
+}
+
+void Scene::drawFakeMouse() const {
+  Autowired<WindowManager> manager;
+  static Leap::GL::Rgba<float> defaultColor(0.9f, 0.9f, 0.9f, 1.0f);
+  static Leap::GL::Rgba<float> leftClickColor(0.3f, 0.5f, 1.0f, 1.0f);
+  static Leap::GL::Rgba<float> rightClickColor(1.0f, 0.5f, 0.3f, 1.0f);
+  static const double defaultRadius = 6.0;
+  static const double clickRadius = 4.5;
+  if (manager) {
+    auto pos = sf::Mouse::getPosition();
+    const Eigen::Vector2d mousePos(pos.x, pos.y);
+    const auto& transform = manager->m_WindowTransform;
+    const Eigen::Vector2d transformedMouse = transform->scale * (mousePos - transform->center);
+    Eigen::Vector3d mouse3D(transformedMouse.x(), transformedMouse.y(), 0.0);
+    mouse3D += transform->offset;
+    mouse3D.y() *= -1.0;
+    m_MouseSphere->Translation() = mouse3D;
+    const bool leftPressed = sf::Mouse::isButtonPressed(sf::Mouse::Left);
+    const bool rightPressed = sf::Mouse::isButtonPressed(sf::Mouse::Right);
+    Leap::GL::Rgba<float> color = defaultColor;
+    if (leftPressed) {
+      color = leftClickColor;
+    } else if (rightPressed) {
+      color = rightClickColor;
+    }
+    m_MouseSphere->Material().Uniform<AMBIENT_LIGHT_COLOR>() = color;
+    m_MouseSphere->SetRadius((leftPressed || rightPressed) ? clickRadius : defaultRadius);
+    PrimitiveBase::DrawSceneGraph(*m_MouseSphere, m_Renderer);
+  }
+}
+
+void Scene::drawClock() const {
+  const double clockScale = 0.2;
+
+  m_Text->Translation().x() =  -0.5f*m_Text->Size().x();
+  m_Text->Translation().y() = -200.0;
+  m_Text->Translation().z() = -50.0;
+
+  const Eigen::Matrix3d rotation = faceCameraMatrix(m_Text->Translation(), m_InputTranslation);
+
+  m_Text->Material().Uniform<AMBIENT_LIGHT_COLOR>() = Leap::GL::Rgba<float>(1.0f, 1.0f, 1.0f, 1.0f);
+  m_Text->LinearTransformation() = clockScale * rotation;
+  PrimitiveBase::DrawSceneGraph(*m_Text, m_Renderer);
+
+  m_Text->Material().Uniform<AMBIENT_LIGHT_COLOR>() = Leap::GL::Rgba<float>(0.1f, 0.1f, 0.1f, 1.0f);
+  m_Text->Translation() += rotation * (4.0 * Eigen::Vector3d::UnitZ());
+  PrimitiveBase::DrawSceneGraph(*m_Text, m_Renderer);
 }
 
 void Scene::createUI() {

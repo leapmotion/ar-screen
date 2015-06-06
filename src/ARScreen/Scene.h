@@ -16,6 +16,8 @@ private:
   void updateTrackedHands(float deltaTime);
   void leapInteract(float deltaTime);
   void drawHands() const;
+  void drawFakeMouse() const;
+  void drawClock() const;
 
   void createUI();
   void drawUI() const;
@@ -32,6 +34,7 @@ private:
   std::shared_ptr<TextureFont> m_Font;
   std::shared_ptr<TextPrimitive> m_Text;
   std::wstring m_ClockString;
+  std::shared_ptr<Sphere> m_MouseSphere;
 
   std::shared_ptr<Disk> m_IconDisk;
   std::shared_ptr<ImagePrimitive> m_IconPrimitive;

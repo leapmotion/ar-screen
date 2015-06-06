@@ -8,6 +8,7 @@
 #include "SceneGraphNodeValues.h"
 #include "ShaderBindingScopeGuard.h"
 #include "RenderState.h"
+#include "utility/Shaders.h"
 //#include "Resource.h"
 
 // This is the base class for drawable, geometric primitives.  It inherits SceneGraphNode<...>
@@ -61,13 +62,18 @@ public:
   typedef typename Properties::AffineTransformValue_::Transform Transform;
 
   Primitive() {
-    //SetShader(Resource<Leap::GL::Shader>("material"));
+    SetShader(DefaultShader());
   }
   virtual ~Primitive() { }
 
   const Leap::GL::Shader &Shader () const {
     assert(m_shader);
     return *m_shader;
+  }
+
+  static const std::shared_ptr<Leap::GL::Shader>& DefaultShader() {
+    static std::shared_ptr<Leap::GL::Shader> defaultShader = std::shared_ptr<Leap::GL::Shader>(new Leap::GL::Shader(Shaders::transformedVert, Shaders::materialFrag));
+    return defaultShader;
   }
 
   const LambertianMaterial &Material () const { return *m_material; }

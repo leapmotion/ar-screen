@@ -273,3 +273,11 @@ bool OSWindowMac::IsVisible(void) const {
   // FIXME
   return true;
 }
+
+void OSWindowMac::SetPosition(const OSPoint& pos) {
+  // FIXME
+}
+
+void OSWindowMac::SetSize(const OSSize& size) {
+  // FIXME
+}

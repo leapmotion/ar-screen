@@ -24,6 +24,8 @@ public:
   void Cloak(void) override;
   void Uncloak(void) override;
   bool IsVisible(void) const override;
+  void SetPosition(const OSPoint& pos) override;
+  void SetSize(const OSSize& size) override;
 
 private:
   const CGWindowID m_windowID;

@@ -50,12 +50,6 @@ void ARScreen::Main(void) {
   arScreenCtxt->Initiate();
   CurrentContextPusher pshr(arScreenCtxt);
 
-  AutoRequired<OSVirtualScreen>();
-  AutoRequired<OSWindowMonitor>()->EnableScan(true);
-  AutoRequired<AudioVolumeInterface>();
-  AutoRequired<MediaInterface>();
-  AutoRequired<WindowManager>();
-
   WindowParams params;
   params.antialias = true;
   params.vsync = false;
@@ -65,6 +59,13 @@ void ARScreen::Main(void) {
     throw std::runtime_error("Unable to initialize glew");
   }
   FreeImage_Initialise();
+
+  // these should be created after GL context creation
+  AutoRequired<WindowManager>();
+  AutoRequired<OSVirtualScreen>();
+  AutoRequired<OSWindowMonitor>()->EnableScan(true);
+  AutoRequired<AudioVolumeInterface>();
+  AutoRequired<MediaInterface>();
 
   m_Oculus.SetWindow(static_cast<OculusVR::WindowHandle>(m_Window.GetWindowHandle()));
   if (!m_Oculus.Init()) {

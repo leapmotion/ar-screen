@@ -115,6 +115,10 @@ public:
   /// </remarks>
   virtual bool IsVisible(void) const = 0;
 
+  virtual void SetPosition(const OSPoint& pos) = 0;
+
+  virtual void SetSize(const OSSize& size) = 0;
+
   bool operator==(const OSWindow& rhs) const {
     return GetWindowID() == rhs.GetWindowID();
   }

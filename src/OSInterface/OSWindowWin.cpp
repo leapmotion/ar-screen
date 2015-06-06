@@ -176,3 +176,11 @@ void OSWindowWin::Uncloak(void) {
 bool OSWindowWin::IsVisible(void) const {
   return !!::IsWindowVisible(hwnd);
 }
+
+void OSWindowWin::SetPosition(const OSPoint& pos) {
+  SetWindowPos(hwnd, HWND_TOP, pos.x, pos.y, 1, 1, SWP_NOSIZE);
+}
+
+void OSWindowWin::SetSize(const OSSize& size) {
+  SetWindowPos(hwnd, HWND_TOP, 1, 1, size.width, size.height, SWP_NOMOVE);
+}

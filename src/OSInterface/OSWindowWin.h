@@ -54,6 +54,8 @@ public:
   void Cloak(void) override;
   void Uncloak(void) override;
   bool IsVisible(void) const override;
+  void SetPosition(const OSPoint& pos) override;
+  void SetSize(const OSSize& size) override;
 };
 
 static_assert(!std::is_abstract<OSWindowWin>::value, "OSWindowWin is meant to be a concrete type");

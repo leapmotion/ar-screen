@@ -5,6 +5,10 @@ set(ARScreen_VERSION "${ARScreen_VERSION_MAJOR}.${ARScreen_VERSION_MINOR}.${ARSc
 set(ARScreen_APPNAME "Augmented Reality Screen")
 set(ARScreen_APPDESC "Leap Motion ARScreen")
 
+set(ARScreen_RESOURCES
+  ${CMAKE_SOURCE_DIR}/fonts/Roboto-Regular.ttf
+)
+
 set(ARScreen_SOURCES
   ARScreen.cpp
   ARScreen.h
@@ -30,6 +34,7 @@ set(ARScreen_SOURCES
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_pch(ARScreen_SOURCES "stdafx.h" "stdafx.cpp")
+add_conditional_sources(ARScreen_SOURCES "" GROUP_NAME "Resource Files" "FILES" ${ARScreen_RESOURCES})
 
 set(_add_executable_options "")
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -60,9 +65,28 @@ target_link_libraries(ARScreen
 )
 target_strip(ARScreen)
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if(WIN32)
+  set_property(TARGET ARScreen APPEND PROPERTY RESOURCE ${ARScreen_RESOURCES})
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set_target_properties(ARScreen PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/src/ARScreen/ARScreen.plist.in)
 endif()
+
+foreach(_resource ${ARScreen_RESOURCES})
+  if(WIN32)
+    add_custom_command(TARGET ARScreen POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different \"${_resource}\" \"$<TARGET_FILE_DIR:ARScreen>\"
+    )
+  elseif(APPLE)
+    get_filename_component(_resource ${_resource} ABSOLUTE)
+    get_target_property(_is_bundle ARScreen MACOSX_BUNDLE)
+    if(_is_bundle)
+      add_custom_command(TARGET ARScreen POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory \"$<TARGET_FILE_DIR:ARScreen>/../Resources/\"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different \"${_resource}\" \"$<TARGET_FILE_DIR:ARScreen>/../Resources/\"
+      )
+    endif()
+  endif()
+endforeach()
 
 # Install commands for the Resources
 install(TARGETS ARScreen COMPONENT ARScreen

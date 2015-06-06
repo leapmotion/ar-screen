@@ -10,7 +10,7 @@ void Scene::Init() {
   m_ImagePassthrough = std::shared_ptr<ImagePassthrough>(new ImagePassthrough());
   m_ImagePassthrough->Init();
 
-  m_Font = std::shared_ptr<TextureFont>(new TextureFont(100.0f, "fonts/Roboto-Regular.ttf", 1024, 1024));
+  m_Font = std::shared_ptr<TextureFont>(new TextureFont(100.0f, "Roboto-Regular.ttf", 1024, 1024));
   m_Font->Load();
 
   m_Text = std::shared_ptr<TextPrimitive>(new TextPrimitive());

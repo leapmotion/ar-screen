@@ -71,7 +71,7 @@ void Scene::Render(const Eigen::Matrix4f& proj, const Eigen::Matrix4f& view, int
 
   drawClock();
 
-  Autowired<WindowManager> manager;
+  AutowiredFast<WindowManager> manager;
   if (manager) {
     for (const auto& it : manager->m_Windows) {
       PrimitiveBase::DrawSceneGraph(*it.second->m_Texture, m_Renderer);
@@ -149,7 +149,7 @@ void Scene::drawHands() const {
 }
 
 void Scene::drawFakeMouse() const {
-  Autowired<WindowManager> manager;
+  AutowiredFast<WindowManager> manager;
   static Leap::GL::Rgba<float> defaultColor(0.9f, 0.9f, 0.9f, 1.0f);
   static Leap::GL::Rgba<float> leftClickColor(0.3f, 0.5f, 1.0f, 1.0f);
   static Leap::GL::Rgba<float> rightClickColor(1.0f, 0.5f, 0.3f, 1.0f);

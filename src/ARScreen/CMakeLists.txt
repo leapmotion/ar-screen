@@ -7,6 +7,12 @@ set(ARScreen_APPDESC "Leap Motion ARScreen")
 
 set(ARScreen_RESOURCES
   ${CMAKE_SOURCE_DIR}/fonts/Roboto-Regular.ttf
+  ${CMAKE_SOURCE_DIR}/images/calendar.png
+  ${CMAKE_SOURCE_DIR}/images/calendar-expand.png
+  ${CMAKE_SOURCE_DIR}/images/email.png
+  ${CMAKE_SOURCE_DIR}/images/phone.png
+  ${CMAKE_SOURCE_DIR}/images/screen-record.png
+  ${CMAKE_SOURCE_DIR}/images/texts.png
 )
 
 set(ARScreen_SOURCES
@@ -34,7 +40,7 @@ set(ARScreen_SOURCES
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_pch(ARScreen_SOURCES "stdafx.h" "stdafx.cpp")
-add_conditional_sources(ARScreen_SOURCES "" GROUP_NAME "Resource Files" "FILES" ${ARScreen_RESOURCES})
+#add_conditional_sources(ARScreen_SOURCES "" GROUP_NAME "Resource Files" FILES ${ARScreen_RESOURCES})
 
 set(_add_executable_options "")
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

@@ -55,11 +55,21 @@ static double timestampToSeconds(int64_t timestampMicrosecs) {
   return 1.0E-6 * timestampMicrosecs;
 }
 
-
 static Eigen::Matrix3d toEigen(const Leap::Matrix& mat) {
   Eigen::Matrix3d result;
   result.col(0) << mat.xBasis.x, mat.xBasis.y, mat.xBasis.z;
   result.col(1) << mat.yBasis.x, mat.yBasis.y, mat.yBasis.z;
   result.col(2) << mat.zBasis.x, mat.zBasis.y, mat.zBasis.z;
+  return result;
+}
+
+static Eigen::Matrix3d faceCameraMatrix(const Eigen::Vector3d& translation, const Eigen::Vector3d& center) {
+  Eigen::Vector3d diff = (translation - center).normalized();
+  Eigen::Vector3d up = Eigen::Vector3d::UnitY();
+  const Eigen::Vector3d side = diff.cross(up).normalized();
+  up = side.cross(diff).normalized();
+  //diff = up.cross(side).normalized();
+  Eigen::Matrix3d result;
+  result << side, up, diff;
   return result;
 }

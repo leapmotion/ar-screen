@@ -3,6 +3,7 @@
 #include "ImagePassthrough.h"
 #include "HandInfo.h"
 #include "TextureFont/TextPrimitive.h"
+#include "GLTexture2Image/GLTexture2Image.h"
 
 class Scene {
 public:
@@ -16,6 +17,9 @@ private:
   void leapInteract(float deltaTime);
   void drawHands() const;
 
+  void createUI();
+  void drawUI() const;
+
   EigenTypes::Matrix3x3 m_InputRotation;
   EigenTypes::Vector3 m_InputTranslation;
   mutable RenderState m_Renderer;
@@ -28,4 +32,14 @@ private:
   std::shared_ptr<TextureFont> m_Font;
   std::shared_ptr<TextPrimitive> m_Text;
   std::wstring m_ClockString;
+
+  std::shared_ptr<Disk> m_IconDisk;
+  std::shared_ptr<ImagePrimitive> m_IconPrimitive;
+  std::shared_ptr<ImagePrimitive> m_ExpandedPrimitive;
+  GLTexture2ImageRef m_CalendarExpanded;
+  GLTexture2ImageRef m_CalendarIcon;
+  GLTexture2ImageRef m_EmailIcon;
+  GLTexture2ImageRef m_PhoneIcon;
+  GLTexture2ImageRef m_RecordIcon;
+  GLTexture2ImageRef m_TextsIcon;
 };

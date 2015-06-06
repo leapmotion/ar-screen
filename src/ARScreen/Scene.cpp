@@ -2,6 +2,7 @@
 #include "Scene.h"
 #include "Leap/GL/Projection.h"
 #include "WindowManager.h"
+#include "Globals.h"
 
 void Scene::Init() {
   m_InputRotation = EigenTypes::Matrix3x3::Identity();
@@ -15,6 +16,7 @@ void Scene::Init() {
 
   m_Text = std::shared_ptr<TextPrimitive>(new TextPrimitive());
   m_Text->SetText(L" ", m_Font);
+  createUI();
 }
 
 void Scene::SetInputTransform(const EigenTypes::Matrix3x3& rotation, const EigenTypes::Vector3& translation) {
@@ -75,6 +77,7 @@ void Scene::Render(const Eigen::Matrix4f& proj, const Eigen::Matrix4f& view, int
       PrimitiveBase::DrawSceneGraph(*it.second->m_Texture, m_Renderer);
     }
   }
+  drawUI();
 
   m_Renderer.GetModelView().Matrix().setIdentity();
   glDisable(GL_DEPTH_TEST);
@@ -141,5 +144,114 @@ void Scene::drawHands() const {
   for (const auto& element : m_TrackedHands) {
     const HandInfo& trackedHand = *element.second;
     trackedHand.DrawCapsuleHand(m_Renderer, m_InputRotation, m_InputTranslation, m_ImagePassthrough.get());
+  }
+}
+
+void Scene::createUI() {
+  m_IconDisk = std::shared_ptr<Disk>(new Disk);
+  m_IconPrimitive = std::shared_ptr<ImagePrimitive>(new ImagePrimitive());
+  m_ExpandedPrimitive = std::shared_ptr<ImagePrimitive>(new ImagePrimitive());
+
+  m_CalendarExpanded = GLTexture2ImageRef(new GLTexture2Image());
+  m_CalendarExpanded->LoadPath("calendar-expand.png");
+
+  m_CalendarIcon = GLTexture2ImageRef(new GLTexture2Image());
+  m_CalendarIcon->LoadPath("calendar.png");
+
+  m_EmailIcon = GLTexture2ImageRef(new GLTexture2Image());
+  m_EmailIcon->LoadPath("email.png");
+
+  m_PhoneIcon = GLTexture2ImageRef(new GLTexture2Image());
+  m_PhoneIcon->LoadPath("phone.png");
+
+  m_RecordIcon = GLTexture2ImageRef(new GLTexture2Image());
+  m_RecordIcon->LoadPath("screen-record.png");
+
+  m_TextsIcon = GLTexture2ImageRef(new GLTexture2Image());
+  m_TextsIcon->LoadPath("texts.png");
+
+  m_IconDisk->Material().Uniform<AMBIENT_LIGHTING_PROPORTION>() = 1.0f;
+  m_IconDisk->SetRadius(20);
+
+  m_IconDisk->AddChild(m_IconPrimitive);
+  m_IconPrimitive->Translation() << 0, 0, 5.0;
+}
+
+void Scene::drawUI() const {
+  const Leap::GL::Rgba<uint8_t> calendarColor(139, 138, 251);
+  const Leap::GL::Rgba<uint8_t> emailColor(211, 107, 202);
+  const Leap::GL::Rgba<uint8_t> phoneColor(87, 208, 193);
+  const Leap::GL::Rgba<uint8_t> recordColor(65, 174, 229);
+  const Leap::GL::Rgba<uint8_t> textColor(251, 55, 104);
+
+  const double radius = m_IconDisk->Radius();
+  const double spacing = 2.25 * radius;
+  double curY = 150;
+  double curX = 150;
+  double curZ = -50;
+
+  {
+    m_IconDisk->Material().Uniform<AMBIENT_LIGHT_COLOR>() = calendarColor;
+    m_IconPrimitive->SetTexture(m_CalendarIcon->GetTexture());
+    m_IconPrimitive->SetScaleBasedOnTextureSize();
+    const double scale = 1.5 * m_IconDisk->Radius() / m_IconPrimitive->Size().norm();
+    m_IconDisk->Translation() << curX, curY, curZ;
+    m_IconPrimitive->LinearTransformation() = scale * Eigen::Matrix3d::Identity();
+    PrimitiveBase::DrawSceneGraph(*m_IconDisk, m_Renderer);
+    curY -= spacing;
+  }
+
+  {
+    m_IconDisk->Material().Uniform<AMBIENT_LIGHT_COLOR>() = emailColor;
+    m_IconPrimitive->SetTexture(m_EmailIcon->GetTexture());
+    m_IconPrimitive->SetScaleBasedOnTextureSize();
+    const double scale = 1.5 * m_IconDisk->Radius() / m_IconPrimitive->Size().norm();
+    m_IconDisk->Translation() << curX, curY, curZ;
+    m_IconPrimitive->LinearTransformation() = scale * Eigen::Matrix3d::Identity();
+    PrimitiveBase::DrawSceneGraph(*m_IconDisk, m_Renderer);
+    curY -= spacing;
+  }
+
+  {
+    m_IconDisk->Material().Uniform<AMBIENT_LIGHT_COLOR>() = phoneColor;
+    m_IconPrimitive->SetTexture(m_PhoneIcon->GetTexture());
+    m_IconPrimitive->SetScaleBasedOnTextureSize();
+    const double scale = 1.5 * m_IconDisk->Radius() / m_IconPrimitive->Size().norm();
+    m_IconDisk->Translation() << curX, curY, curZ;
+    m_IconPrimitive->LinearTransformation() = scale * Eigen::Matrix3d::Identity();
+    PrimitiveBase::DrawSceneGraph(*m_IconDisk, m_Renderer);
+    curY -= spacing;
+  }
+
+  {
+    m_IconDisk->Material().Uniform<AMBIENT_LIGHT_COLOR>() = recordColor;
+    m_IconPrimitive->SetTexture(m_RecordIcon->GetTexture());
+    m_IconPrimitive->SetScaleBasedOnTextureSize();
+    const double scale = 1.5 * m_IconDisk->Radius() / m_IconPrimitive->Size().norm();
+    m_IconDisk->Translation() << curX, curY, curZ;
+    m_IconPrimitive->LinearTransformation() = scale * Eigen::Matrix3d::Identity();
+    PrimitiveBase::DrawSceneGraph(*m_IconDisk, m_Renderer);
+    curY -= spacing;
+  }
+
+  {
+    m_IconDisk->Material().Uniform<AMBIENT_LIGHT_COLOR>() = textColor;
+    m_IconPrimitive->SetTexture(m_TextsIcon->GetTexture());
+    m_IconPrimitive->SetScaleBasedOnTextureSize();
+    const double scale = 1.5 * m_IconDisk->Radius() / m_IconPrimitive->Size().norm();
+    m_IconDisk->Translation() << curX, curY, curZ;
+    m_IconPrimitive->LinearTransformation() = scale * Eigen::Matrix3d::Identity();
+    PrimitiveBase::DrawSceneGraph(*m_IconDisk, m_Renderer);
+    curY -= spacing;
+  }
+
+  {
+    const double size = 4 * spacing;
+    m_ExpandedPrimitive->SetTexture(m_CalendarExpanded->GetTexture());
+    m_ExpandedPrimitive->SetScaleBasedOnTextureSize();
+    const double scale = (size + 2*radius) / m_ExpandedPrimitive->Size().y();
+    m_ExpandedPrimitive->Translation() << 300, 150 - size/2.0, curZ;
+    m_ExpandedPrimitive->LinearTransformation() = scale * Eigen::Matrix3d::Identity();
+    PrimitiveBase::DrawSceneGraph(*m_ExpandedPrimitive, m_Renderer);
   }
 }

@@ -20,8 +20,8 @@ void Scene::Init() {
   m_Font = std::shared_ptr<TextureFont>(new TextureFont(100.0f, "Roboto-Regular.ttf", 1024, 1024));
   m_Font->Load();
 
-  m_Text = std::shared_ptr<TextPrimitive>(new TextPrimitive());
-  m_Text->SetText(L" ", m_Font);
+  m_ClockText = std::shared_ptr<TextPrimitive>(new TextPrimitive());
+  m_ClockText->SetText(L" ", m_Font);
 
   m_MouseSphere = std::shared_ptr<Sphere>(new Sphere());
   m_MouseSphere->Material().Uniform<AMBIENT_LIGHTING_PROPORTION>() = 1.0f;
@@ -30,6 +30,8 @@ void Scene::Init() {
   m_IntersectionDisk->Material().Uniform<AMBIENT_LIGHTING_PROPORTION>() = 1.0f;
 
   createUI();
+
+  createNewsFeed();
 }
 
 void Scene::SetInputTransform(const EigenTypes::Matrix3x3& rotation, const EigenTypes::Vector3& translation) {
@@ -81,7 +83,7 @@ void Scene::Update(const std::deque<Leap::Frame>& frames) {
   const std::string timeStr = getTimeString(-7);
   const std::wstring timeStrW(timeStr.begin(), timeStr.end());
   if (timeStrW != m_ClockString) {
-    m_Text->SetText(timeStrW, m_Font);
+    m_ClockText->SetText(timeStrW, m_Font);
     m_ClockString = timeStrW;
   }
 }
@@ -105,6 +107,7 @@ void Scene::Render(const Eigen::Matrix4f& proj, const Eigen::Matrix4f& view, int
   drawWindows();
   drawFakeMouse();
   drawUI();
+  drawNewsFeed();
 
   m_Renderer.GetModelView().Matrix().setIdentity();
   glDisable(GL_DEPTH_TEST);
@@ -172,6 +175,16 @@ void Scene::leapInteract(float deltaTime) {
       wind.Interact(*(manager->m_WindowTransform), m_TrackedHands, deltaTime);
     }
   }
+
+  double movement = 0;
+  for (const auto& it : m_TrackedHands) {
+    const HandInfo& trackedHand = *it.second;
+    HandInfo::IntersectionVector intersections = trackedHand.IntersectRectangle(*m_NewsFeedRect);
+    for (const auto& intersection : intersections) {
+      movement += 0.25 * deltaTime * intersection.velocity.y();
+    }
+  }
+  m_FeedScroll += movement;
 }
 
 void Scene::drawHands() const {
@@ -265,22 +278,13 @@ void Scene::drawUI() const {
   const Leap::GL::Rgba<uint8_t> phoneColor(87, 208, 193);
   const Leap::GL::Rgba<uint8_t> recordColor(65, 174, 229);
   const Leap::GL::Rgba<uint8_t> textColor(251, 55, 104);
+  const Leap::GL::Rgba<float> clockColor(1.0f, 1.0f, 1.0f, 1.0f);
 
   const double radius = m_IconDisk->Radius();
   const double spacing = 2.25 * radius;
-  double curX = 250;
-  double curY = 150;
-  double curZ = 100;
-
-  {
-    const double clockScale = 0.25;
-    m_Text->Translation() << curX, curY + spacing, curZ;
-    const Eigen::Matrix3d rotation = faceCameraMatrix(m_Text->Translation(), m_InputTranslation);
-
-    m_Text->Material().Uniform<AMBIENT_LIGHT_COLOR>() = Leap::GL::Rgba<float>(1.0f, 1.0f, 1.0f, 1.0f);
-    m_Text->LinearTransformation() = clockScale * rotation;
-    PrimitiveBase::DrawSceneGraph(*m_Text, m_Renderer);
-  }
+  double curX = 350;
+  double curY = 100;
+  double curZ = 200;
 
   {
     const Eigen::Matrix3d calendarExpandedMatrix = Eigen::Matrix3d::Identity();
@@ -301,7 +305,7 @@ void Scene::drawUI() const {
     m_IconPrimitive->SetScaleBasedOnTextureSize();
     const double scale = 1.5 * m_IconDisk->Radius() / m_IconPrimitive->Size().norm();
     m_IconDisk->Translation() << curX, curY, curZ;
-    m_IconDisk->LinearTransformation() = faceCameraMatrix(m_IconDisk->Translation(), m_InputTranslation);
+    m_IconDisk->LinearTransformation() = faceCameraMatrix(m_IconDisk->Translation(), Globals::userPos, false);
     m_IconPrimitive->LinearTransformation() = scale * Eigen::Matrix3d::Identity();
     if (m_ShowCalendar) {
       m_IconDisk->AddChild(m_ExpandedPrimitive);
@@ -334,7 +338,7 @@ void Scene::drawUI() const {
     m_IconPrimitive->SetScaleBasedOnTextureSize();
     const double scale = 1.5 * m_IconDisk->Radius() / m_IconPrimitive->Size().norm();
     m_IconDisk->Translation() << curX, curY, curZ;
-    m_IconDisk->LinearTransformation() = faceCameraMatrix(m_IconDisk->Translation(), m_InputTranslation);
+    m_IconDisk->LinearTransformation() = faceCameraMatrix(m_IconDisk->Translation(), Globals::userPos, false);
     m_IconPrimitive->LinearTransformation() = scale * Eigen::Matrix3d::Identity();
     PrimitiveBase::DrawSceneGraph(*m_IconDisk, m_Renderer);
     curY -= spacing;
@@ -346,7 +350,7 @@ void Scene::drawUI() const {
     m_IconPrimitive->SetScaleBasedOnTextureSize();
     const double scale = 1.5 * m_IconDisk->Radius() / m_IconPrimitive->Size().norm();
     m_IconDisk->Translation() << curX, curY, curZ;
-    m_IconDisk->LinearTransformation() = faceCameraMatrix(m_IconDisk->Translation(), m_InputTranslation);
+    m_IconDisk->LinearTransformation() = faceCameraMatrix(m_IconDisk->Translation(), Globals::userPos, false);
     m_IconPrimitive->LinearTransformation() = scale * Eigen::Matrix3d::Identity();
     PrimitiveBase::DrawSceneGraph(*m_IconDisk, m_Renderer);
     curY -= spacing;
@@ -358,7 +362,7 @@ void Scene::drawUI() const {
     m_IconPrimitive->SetScaleBasedOnTextureSize();
     const double scale = 1.5 * m_IconDisk->Radius() / m_IconPrimitive->Size().norm();
     m_IconDisk->Translation() << curX, curY, curZ;
-    m_IconDisk->LinearTransformation() = faceCameraMatrix(m_IconDisk->Translation(), m_InputTranslation);
+    m_IconDisk->LinearTransformation() = faceCameraMatrix(m_IconDisk->Translation(), Globals::userPos, false);
     m_IconPrimitive->LinearTransformation() = scale * Eigen::Matrix3d::Identity();
     PrimitiveBase::DrawSceneGraph(*m_IconDisk, m_Renderer);
     curY -= spacing;
@@ -370,11 +374,109 @@ void Scene::drawUI() const {
     m_IconPrimitive->SetScaleBasedOnTextureSize();
     const double scale = 1.5 * m_IconDisk->Radius() / m_IconPrimitive->Size().norm();
     m_IconDisk->Translation() << curX, curY, curZ;
-    m_IconDisk->LinearTransformation() = faceCameraMatrix(m_IconDisk->Translation(), m_InputTranslation);
+    m_IconDisk->LinearTransformation() = faceCameraMatrix(m_IconDisk->Translation(), Globals::userPos, false);
     m_IconPrimitive->LinearTransformation() = scale * Eigen::Matrix3d::Identity();
     PrimitiveBase::DrawSceneGraph(*m_IconDisk, m_Renderer);
     curY -= spacing;
   }
+
+  {
+    const double clockScale = 0.25;
+    m_ClockText->Translation() << curX, curY - spacing, curZ;
+    const Eigen::Matrix3d rotation = faceCameraMatrix(m_ClockText->Translation(), Globals::userPos, true);
+
+    m_ClockText->Material().Uniform<AMBIENT_LIGHT_COLOR>() = clockColor;
+    m_ClockText->LinearTransformation() = clockScale * rotation;
+    PrimitiveBase::DrawSceneGraph(*m_ClockText, m_Renderer);
+  }
+}
+
+void Scene::createNewsFeed() {
+  const std::vector<std::string> feedStrings ={
+    "You have five unread email messages",
+    "Your car repairs will be completed tomorrow afternoon",
+    "Bob Simmons has added you as a connection on LinkedIn",
+    "You have two new friend requests on Facebook",
+    "Your anniversary is in a few weeks",
+    "Project proposal is due today at 5PM",
+    "Rachel's birthday is tomorrow",
+    "There is construction on the Bay bridge tonight",
+    "Weather this weekend will be mostly sunny",
+    "Golden State Warriors have won the NBA Finals",
+    "Steven invited you to catch up over drinks on Friday",
+    "Apple announced iOS 9 this morning",
+    "All BART trains are experiencing heavy delays",
+    "You have three phone screens next week",
+    "Donate to Nepal earthquake relief",
+    "Your subscription to Lorem Ipsum expires next Tuesday",
+    "Ralph Johnson started a new job at Google today",
+    "Your next meeting is in 45 minutes",
+    "You've burned 330 calories so far today",
+    "Marvin Porter starts on your team next week"
+  };
+
+  m_NewsFeedRect = std::shared_ptr<RectanglePrim>(new RectanglePrim());
+  for (const std::string& str : feedStrings) {
+    std::shared_ptr<TextPrimitive> feedItem = std::shared_ptr<TextPrimitive>(new TextPrimitive());
+    feedItem->SetText(std::wstring(str.begin(), str.end()), m_Font);
+    m_NewsFeedItems.push_back(feedItem);
+    m_NewsFeedRect->AddChild(feedItem);
+    feedItem->Material().Uniform<AMBIENT_LIGHT_COLOR>().A() = 0.0f;
+  }
+
+  m_NewsFeedRect->Material().Uniform<AMBIENT_LIGHT_COLOR>().A() = 0.15f;
+  m_FeedScroll = 10000;
+}
+
+void Scene::drawNewsFeed() const {
+  const double startY = 50;
+  const double feedHeight = 250.0;
+  const double feedWidth = 350.0;
+
+  m_NewsFeedRect->SetSize(Eigen::Vector2d(feedWidth, feedHeight));
+  m_NewsFeedRect->Translation() << -350, 50, 300;
+  m_NewsFeedRect->LinearTransformation() = faceCameraMatrix(m_NewsFeedRect->Translation(), Globals::userPos, false);
+
+  double curY = 0;
+  const double spacing = 20.0;
+  size_t itemIdx = 0;
+  bool primed = false;
+  bool started = false;
+  bool done = false;
+  while (!done) {
+    const double itemY = curY + m_FeedScroll;
+    const double distFromEdge = std::min(std::max(feedHeight/2.0 - itemY, 0.0), std::max(itemY + feedHeight/2.0, 0.0));
+    const double alphaMult = SmootherStep(std::max(0.0, std::min(1.0, distFromEdge/(2.0*spacing))));
+
+    const std::shared_ptr<TextPrimitive>& item = m_NewsFeedItems[itemIdx];
+    const Leap::GL::Rgba<float> itemColor(1.0f, 1.0f, 1.0f, alphaMult);
+    item->Material().Uniform<AMBIENT_LIGHT_COLOR>() = itemColor;
+    if (alphaMult > 0.0001) {
+      item->Translation() << -feedWidth/2.0 + 0.5*spacing, itemY, 2;
+      const double scale = 0.125;
+      item->LinearTransformation() = scale * Eigen::Matrix3d::Identity();
+      started = true;
+    }
+    if (started && alphaMult == 0.0) {
+      done = true;
+    }
+    curY -= spacing;
+    itemIdx = (itemIdx + 1) % m_NewsFeedItems.size();
+  }
+
+  for (const auto& it : m_TrackedHands) {
+    const HandInfo& trackedHand = *it.second;
+    HandInfo::IntersectionVector intersections = trackedHand.IntersectRectangle(*m_NewsFeedRect);
+    for (const auto& intersection : intersections) {
+      m_IntersectionDisk->Translation() = intersection.point;
+      m_IntersectionDisk->SetRadius(1.25*intersection.radius);
+      m_IntersectionDisk->Material().Uniform<AMBIENT_LIGHT_COLOR>() = makeIntersectionDiskColor(intersection.confidence);
+      m_IntersectionDisk->LinearTransformation() = m_NewsFeedRect->LinearTransformation();
+      PrimitiveBase::DrawSceneGraph(*m_IntersectionDisk, m_Renderer);
+    }
+  }
+
+  PrimitiveBase::DrawSceneGraph(*m_NewsFeedRect, m_Renderer);
 }
 
 Leap::GL::Rgba<float> Scene::makeIntersectionDiskColor(double confidence) {

@@ -63,18 +63,19 @@ static Eigen::Matrix3d toEigen(const Leap::Matrix& mat) {
   return result;
 }
 
-static Eigen::Matrix3d faceCameraMatrix(const Eigen::Vector3d& translation, const Eigen::Vector3d& center) {
-#if 0
-  const Eigen::Vector3d diff = (center - translation).normalized();
-  Eigen::Vector3d up = Eigen::Vector3d::UnitY();
-  const Eigen::Vector3d side = up.cross(diff).normalized();
-  up = diff.cross(side).normalized();
-#else
-  const Eigen::Vector3d up = Eigen::Vector3d::UnitY();
-  Eigen::Vector3d diff = (center - translation).normalized();
-  const Eigen::Vector3d side = up.cross(diff).normalized();
-  diff = side.cross(up);
-#endif
+static Eigen::Matrix3d faceCameraMatrix(const Eigen::Vector3d& translation, const Eigen::Vector3d& center, bool vertical) {
+  Eigen::Vector3d side, up, diff;
+  if (vertical) {
+    diff = (center - translation).normalized();
+    up = Eigen::Vector3d::UnitY();
+    side = up.cross(diff).normalized();
+    up = diff.cross(side).normalized();
+  } else {
+    diff = (center - translation).normalized();
+    up = Eigen::Vector3d::UnitY();
+    side = up.cross(diff).normalized();
+    diff = side.cross(up);
+  }
   Eigen::Matrix3d result;
   result << side, up, diff;
   return result;

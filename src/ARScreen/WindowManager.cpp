@@ -85,7 +85,7 @@ void FakeWindow::Interact(const WindowTransform& transform, const HandInfoMap& h
   }
 
   if (movementsPerHand.size() > 0) {
-    m_Window.SetFocus();
+    //m_Window.SetFocus();
     m_PositionVel /= movementsPerHand.size();
   }
 
@@ -175,7 +175,7 @@ void WindowManager::Tick(std::chrono::duration<double> deltaT) {
       m_WindowTransform->offset = Globals::screenPos + Eigen::Vector3d(0, Globals::screenHeight, 0);
     } else {
       m_WindowTransform->scale = 500 / screenSize.norm();
-      m_WindowTransform->offset << 0, 300, -100.0;
+      m_WindowTransform->offset << 0, 200, -100.0;
     }
   }
 

@@ -22,6 +22,8 @@ private:
   void drawWindows() const;
   void createUI();
   void drawUI() const;
+  void createNewsFeed();
+  void drawNewsFeed() const;
   static Leap::GL::Rgba<float> makeIntersectionDiskColor(double confidence);
 
   EigenTypes::Matrix3x3 m_InputRotation;
@@ -34,7 +36,7 @@ private:
   HandInfoMap m_TrackedHands;
 
   std::shared_ptr<TextureFont> m_Font;
-  std::shared_ptr<TextPrimitive> m_Text;
+  std::shared_ptr<TextPrimitive> m_ClockText;
   std::wstring m_ClockString;
   std::shared_ptr<Sphere> m_MouseSphere;
 
@@ -54,4 +56,8 @@ private:
 
   mutable bool m_ShowCalendar;
   mutable bool m_ButtonCooldown;
+
+  std::vector<std::shared_ptr<TextPrimitive>> m_NewsFeedItems;
+  mutable double m_FeedScroll;
+  std::shared_ptr<RectanglePrim> m_NewsFeedRect;
 };

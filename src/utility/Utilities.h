@@ -64,12 +64,20 @@ static Eigen::Matrix3d toEigen(const Leap::Matrix& mat) {
 }
 
 static Eigen::Matrix3d faceCameraMatrix(const Eigen::Vector3d& translation, const Eigen::Vector3d& center) {
-  Eigen::Vector3d diff = (translation - center).normalized();
+  Eigen::Vector3d diff = (center - translation).normalized();
   Eigen::Vector3d up = Eigen::Vector3d::UnitY();
-  const Eigen::Vector3d side = diff.cross(up).normalized();
-  up = side.cross(diff).normalized();
-  //diff = up.cross(side).normalized();
+  const Eigen::Vector3d side = up.cross(diff).normalized();
+  up = diff.cross(side).normalized();
   Eigen::Matrix3d result;
   result << side, up, diff;
   return result;
+}
+
+static bool IntersectPlane(const Eigen::Vector3d& rayOrigin, const Eigen::Vector3d& rayDir, const Eigen::Vector3d& center, const Eigen::Vector3d& normal, double& t) {
+  const double temp = -(normal.dot(rayOrigin - center)) / normal.dot(rayDir);
+  if (temp > 0 && temp < t) {
+    t = temp;
+    return true;
+  }
+  return false;
 }

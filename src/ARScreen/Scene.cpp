@@ -18,6 +18,10 @@ void Scene::Init() {
   m_Text->SetText(L" ", m_Font);
 
   m_MouseSphere = std::shared_ptr<Sphere>(new Sphere());
+  m_MouseSphere->Material().Uniform<AMBIENT_LIGHTING_PROPORTION>() = 1.0f;
+
+  m_IntersectionDisk = std::shared_ptr<Disk>(new Disk());
+  m_IntersectionDisk->Material().Uniform<AMBIENT_LIGHTING_PROPORTION>() = 1.0f;
 
   createUI();
 }
@@ -70,13 +74,7 @@ void Scene::Render(const Eigen::Matrix4f& proj, const Eigen::Matrix4f& view, int
   m_Renderer.GetModelView().Matrix() = view.cast<double>();
 
   drawClock();
-
-  AutowiredFast<WindowManager> manager;
-  if (manager) {
-    for (const auto& it : manager->m_Windows) {
-      PrimitiveBase::DrawSceneGraph(*it.second->m_Texture, m_Renderer);
-    }
-  }
+  drawWindows();
   drawFakeMouse();
   drawUI();
 
@@ -139,11 +137,18 @@ void Scene::updateTrackedHands(float deltaTime) {
 }
 
 void Scene::leapInteract(float deltaTime) {
+  AutowiredFast<WindowManager> manager;
+  if (manager) {
+    for (auto& it : manager->m_Windows) {
+      FakeWindow& wind = *it.second;
+      wind.Interact(*(manager->m_WindowTransform), m_TrackedHands, deltaTime);
+    }
+  }
 }
 
 void Scene::drawHands() const {
-  for (const auto& element : m_TrackedHands) {
-    const HandInfo& trackedHand = *element.second;
+  for (const auto& it : m_TrackedHands) {
+    const HandInfo& trackedHand = *it.second;
     trackedHand.DrawCapsuleHand(m_Renderer, m_InputRotation, m_InputTranslation, m_ImagePassthrough.get());
   }
 }
@@ -157,12 +162,9 @@ void Scene::drawFakeMouse() const {
   static const double clickRadius = 4.5;
   if (manager) {
     auto pos = sf::Mouse::getPosition();
-    const Eigen::Vector2d mousePos(pos.x, pos.y);
+    const Eigen::Vector2d mousePos(pos.x, -pos.y);
     const auto& transform = manager->m_WindowTransform;
-    const Eigen::Vector2d transformedMouse = transform->scale * (mousePos - transform->center);
-    Eigen::Vector3d mouse3D(transformedMouse.x(), transformedMouse.y(), 0.0);
-    mouse3D += transform->offset;
-    mouse3D.y() *= -1.0;
+    const Eigen::Vector3d mouse3D = transform->Forward(mousePos);
     m_MouseSphere->Translation() = mouse3D;
     const bool leftPressed = sf::Mouse::isButtonPressed(sf::Mouse::Left);
     const bool rightPressed = sf::Mouse::isButtonPressed(sf::Mouse::Right);
@@ -194,6 +196,25 @@ void Scene::drawClock() const {
   m_Text->Material().Uniform<AMBIENT_LIGHT_COLOR>() = Leap::GL::Rgba<float>(0.1f, 0.1f, 0.1f, 1.0f);
   m_Text->Translation() += rotation * (4.0 * Eigen::Vector3d::UnitZ());
   PrimitiveBase::DrawSceneGraph(*m_Text, m_Renderer);
+}
+
+void Scene::drawWindows() const {
+  AutowiredFast<WindowManager> manager;
+  if (manager) {
+    for (const auto& it : manager->m_Windows) {
+      PrimitiveBase::DrawSceneGraph(*it.second->m_Texture, m_Renderer);
+      for (const auto& it2 : m_TrackedHands) {
+        const HandInfo& trackedHand = *it2.second;
+        HandInfo::IntersectionVector intersections = trackedHand.IntersectRectangle(*it.second->m_Texture);
+        for (const auto& intersection : intersections) {
+          m_IntersectionDisk->Translation() = intersection.point;
+          m_IntersectionDisk->SetRadius(1.25*intersection.radius);
+          m_IntersectionDisk->Material().Uniform<AMBIENT_LIGHT_COLOR>() = makeIntersectionDiskColor(intersection.confidence);
+          PrimitiveBase::DrawSceneGraph(*m_IntersectionDisk, m_Renderer);
+        }
+      }
+    }
+  }
 }
 
 void Scene::createUI() {
@@ -295,12 +316,36 @@ void Scene::drawUI() const {
   }
 
   {
+    const Eigen::Matrix3d calendarExpandedMatrix = Eigen::Matrix3d::Identity();
+    //const Eigen::Matrix3d calendarExpandedMatrix = faceCameraMatrix(m_ExpandedPrimitive->Translation(), m_InputTranslation);
     const double size = 4 * spacing;
     m_ExpandedPrimitive->SetTexture(m_CalendarExpanded->GetTexture());
     m_ExpandedPrimitive->SetScaleBasedOnTextureSize();
     const double scale = (size + 2*radius) / m_ExpandedPrimitive->Size().y();
     m_ExpandedPrimitive->Translation() << 300, 150 - size/2.0, curZ;
-    m_ExpandedPrimitive->LinearTransformation() = scale * Eigen::Matrix3d::Identity();
+    m_ExpandedPrimitive->LinearTransformation() = scale * calendarExpandedMatrix;
     PrimitiveBase::DrawSceneGraph(*m_ExpandedPrimitive, m_Renderer);
+
+    for (const auto& it : m_TrackedHands) {
+      const HandInfo& trackedHand = *it.second;
+      HandInfo::IntersectionVector intersections = trackedHand.IntersectRectangle(*m_ExpandedPrimitive);
+      for (const auto& intersection : intersections) {
+        m_IntersectionDisk->Translation() = intersection.point;
+        m_IntersectionDisk->LinearTransformation() = calendarExpandedMatrix;
+        m_IntersectionDisk->SetRadius(1.25*intersection.radius);
+        m_IntersectionDisk->Material().Uniform<AMBIENT_LIGHT_COLOR>() = makeIntersectionDiskColor(intersection.confidence);
+        PrimitiveBase::DrawSceneGraph(*m_IntersectionDisk, m_Renderer);
+      }
+    }
   }
+
+}
+
+Leap::GL::Rgba<float> Scene::makeIntersectionDiskColor(double confidence) {
+  Leap::GL::Rgba<float> color;
+  color.R() = Globals::glowColor.x();
+  color.G() = Globals::glowColor.y();
+  color.B() = Globals::glowColor.z();
+  color.A() = confidence;
+  return color;
 }

@@ -38,6 +38,17 @@ public:
   int NumExtendedFingers() const { return m_numExtendedFingers; }
   double CreationTimeSeconds() const { return m_creationTimeSeconds; }
 
+  struct Intersection {
+    Eigen::Vector3d point;
+    double radius;
+    double confidence;
+    Eigen::Vector3d velocity;
+  };
+
+  typedef std::vector<Intersection, Eigen::aligned_allocator<Intersection>> IntersectionVector;
+
+  IntersectionVector IntersectRectangle(const RectanglePrim& prim) const;
+
   static const int BONES_PER_FINGER = static_cast<int>(Leap::Bone::TYPE_DISTAL) + 1;
   static const int POINTS_PER_FINGER = BONES_PER_FINGER + 1;
   static const int NUM_HAND_POINTS = POINTS_PER_FINGER * 5;
@@ -60,3 +71,5 @@ private:
   mutable std::shared_ptr<RadialPolygonPrim> m_armPrim;
 
 };
+
+typedef std::map<int, std::shared_ptr<HandInfo>> HandInfoMap;

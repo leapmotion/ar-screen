@@ -18,9 +18,10 @@ private:
   void drawHands() const;
   void drawFakeMouse() const;
   void drawClock() const;
-
+  void drawWindows() const;
   void createUI();
   void drawUI() const;
+  static Leap::GL::Rgba<float> makeIntersectionDiskColor(double confidence);
 
   EigenTypes::Matrix3x3 m_InputRotation;
   EigenTypes::Vector3 m_InputTranslation;
@@ -28,7 +29,6 @@ private:
   std::shared_ptr<ImagePassthrough> m_ImagePassthrough;
 
   Leap::Frame m_CurFrame;
-  typedef std::map<int, std::shared_ptr<HandInfo>> HandInfoMap;
   HandInfoMap m_TrackedHands;
 
   std::shared_ptr<TextureFont> m_Font;
@@ -45,4 +45,6 @@ private:
   GLTexture2ImageRef m_PhoneIcon;
   GLTexture2ImageRef m_RecordIcon;
   GLTexture2ImageRef m_TextsIcon;
+
+  std::shared_ptr<Disk> m_IntersectionDisk;
 };

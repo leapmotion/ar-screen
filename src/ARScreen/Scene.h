@@ -19,7 +19,6 @@ private:
   void leapInteract(float deltaTime);
   void drawHands() const;
   void drawFakeMouse() const;
-  void drawClock() const;
   void drawWindows() const;
   void createUI();
   void drawUI() const;
@@ -52,4 +51,7 @@ private:
   std::shared_ptr<Disk> m_IntersectionDisk;
   Smoothed<Eigen::Vector3d> m_ScreenPositionSmoother;
   Smoothed<Eigen::Matrix3d> m_ScreenRotationSmoother;
+
+  mutable bool m_ShowCalendar;
+  mutable bool m_ButtonCooldown;
 };

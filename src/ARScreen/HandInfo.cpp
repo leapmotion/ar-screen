@@ -33,7 +33,7 @@ void HandInfo::Update(const Leap::Hand& hand, float deltaTime, const EigenTypes:
   const float falloffMult = 1.0f;
 
   const float timeVisibleMult = SmootherStep(std::min(1.0f, 6.0f*static_cast<float>(curTimeSeconds - m_creationTimeSeconds)));
-  const float confidenceMult = SmootherStep(std::min(1.0f, 2.0f * hand.confidence() * hand.confidence()));
+  const float confidenceMult = SmootherStep(std::min(1.0f, 2.0f * hand.confidence()));
   m_confidence.SetSmoothStrength(0.5f);
   m_confidence.SetGoal(timeVisibleMult * confidenceMult * falloffMult);
   m_confidence.Update(deltaTime);
@@ -202,6 +202,53 @@ HandInfo::IntersectionVector HandInfo::IntersectRectangle(const RectanglePrim& p
           const Eigen::Vector3d untransformed = linear.inverse() * (surfacePoint - center);
           if (std::fabs(untransformed.x()) < 0.5*prim.Size().x() && std::fabs(untransformed.y()) < 0.5*prim.Size().y()) {
             const double ratio = t / distBetweenPoints; 
+            intersection.radius = (1.0-ratio)*point1.radius + ratio*point2.radius;
+            intersection.velocity = (1.0-ratio)*point1.velocity + ratio*point2.velocity;
+            intersection.point = surfacePoint + normal;
+            intersection.confidence = confidence;
+            intersections.push_back(intersection);
+          }
+        }
+      }
+
+      pointIdx++;
+    }
+    pointIdx++;
+  }
+
+  return intersections;
+}
+
+HandInfo::IntersectionVector HandInfo::IntersectDisk(const Disk& prim) const {
+  const Eigen::Vector3d center = prim.Translation();
+  const Eigen::Matrix3d linear = prim.LinearTransformation();
+  const Eigen::Vector3d normal = prim.LinearTransformation().col(2).normalized();
+  const Eigen::Vector3d scale(linear.row(0).norm(), linear.row(1).norm(), linear.row(2).norm());
+  IntersectionVector intersections;
+
+  Intersection intersection;
+  const double confidence = GetConfidence();
+  int pointIdx = 0;
+  for (int i=0; i<5; i++) {
+    for (int j=0; j<HandInfo::BONES_PER_FINGER; j++) {
+      const auto& point1 = GetHandPoint(pointIdx);
+      const auto& point2 = GetHandPoint(pointIdx+1);
+
+      const bool dot1Sign = (point1.point - center).dot(normal) > 0;
+      const bool dot2Sign = (point2.point - center).dot(normal) > 0;
+
+      if (dot1Sign != dot2Sign) {
+        const Eigen::Vector3d diff = (point2.point - point1.point);
+        const double distBetweenPoints = diff.norm();
+        const Eigen::Vector3d dir = diff/distBetweenPoints;
+
+        double t = DBL_MAX;
+        if (IntersectPlane(point1.point, dir, prim.Translation(), normal, t)) {
+          const Eigen::Vector3d surfacePoint = point1.point + t * dir;
+
+          const Eigen::Vector3d untransformed = linear.inverse() * (surfacePoint - center);
+          if (untransformed.norm() < prim.Radius()) {
+            const double ratio = t / distBetweenPoints;
             intersection.radius = (1.0-ratio)*point1.radius + ratio*point2.radius;
             intersection.velocity = (1.0-ratio)*point1.velocity + ratio*point2.velocity;
             intersection.point = surfacePoint + normal;

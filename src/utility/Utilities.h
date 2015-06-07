@@ -20,7 +20,7 @@ static void getCurTimeGMT(int gmtPlus, int& hours, int& minutes, int& seconds, b
   } else if (hours > 24) {
     hours -= 24;
   }
-  am = hours <= 12;
+  am = hours < 12;
   hours = hours % 12;
   if (hours == 0) {
     hours = 12;
@@ -64,10 +64,17 @@ static Eigen::Matrix3d toEigen(const Leap::Matrix& mat) {
 }
 
 static Eigen::Matrix3d faceCameraMatrix(const Eigen::Vector3d& translation, const Eigen::Vector3d& center) {
-  Eigen::Vector3d diff = (center - translation).normalized();
+#if 0
+  const Eigen::Vector3d diff = (center - translation).normalized();
   Eigen::Vector3d up = Eigen::Vector3d::UnitY();
   const Eigen::Vector3d side = up.cross(diff).normalized();
   up = diff.cross(side).normalized();
+#else
+  const Eigen::Vector3d up = Eigen::Vector3d::UnitY();
+  Eigen::Vector3d diff = (center - translation).normalized();
+  const Eigen::Vector3d side = up.cross(diff).normalized();
+  diff = side.cross(up);
+#endif
   Eigen::Matrix3d result;
   result << side, up, diff;
   return result;

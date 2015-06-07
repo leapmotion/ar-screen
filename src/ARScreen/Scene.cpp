@@ -101,7 +101,7 @@ void Scene::Render(const Eigen::Matrix4f& proj, const Eigen::Matrix4f& view, int
 
   m_Renderer.GetModelView().Matrix() = view.cast<double>();
 
-  drawClock();
+  glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE);
   drawWindows();
   drawFakeMouse();
   drawUI();
@@ -208,24 +208,6 @@ void Scene::drawFakeMouse() const {
   }
 }
 
-void Scene::drawClock() const {
-  const double clockScale = 0.2;
-
-  m_Text->Translation().x() =  -0.5f*m_Text->Size().x();
-  m_Text->Translation().y() = -200.0;
-  m_Text->Translation().z() = -50.0;
-
-  const Eigen::Matrix3d rotation = faceCameraMatrix(m_Text->Translation(), m_InputTranslation);
-
-  m_Text->Material().Uniform<AMBIENT_LIGHT_COLOR>() = Leap::GL::Rgba<float>(1.0f, 1.0f, 1.0f, 1.0f);
-  m_Text->LinearTransformation() = clockScale * rotation;
-  PrimitiveBase::DrawSceneGraph(*m_Text, m_Renderer);
-
-  m_Text->Material().Uniform<AMBIENT_LIGHT_COLOR>() = Leap::GL::Rgba<float>(0.1f, 0.1f, 0.1f, 1.0f);
-  m_Text->Translation() += rotation * (4.0 * Eigen::Vector3d::UnitZ());
-  PrimitiveBase::DrawSceneGraph(*m_Text, m_Renderer);
-}
-
 void Scene::drawWindows() const {
   AutowiredFast<WindowManager> manager;
   if (manager) {
@@ -273,6 +255,8 @@ void Scene::createUI() {
 
   m_IconDisk->AddChild(m_IconPrimitive);
   m_IconPrimitive->Translation() << 0, 0, 5.0;
+  m_ShowCalendar = false;
+  m_ButtonCooldown = false;
 }
 
 void Scene::drawUI() const {
@@ -284,9 +268,32 @@ void Scene::drawUI() const {
 
   const double radius = m_IconDisk->Radius();
   const double spacing = 2.25 * radius;
+  double curX = 250;
   double curY = 150;
-  double curX = 150;
-  double curZ = -50;
+  double curZ = 100;
+
+  {
+    const double clockScale = 0.25;
+    m_Text->Translation() << curX, curY + spacing, curZ;
+    const Eigen::Matrix3d rotation = faceCameraMatrix(m_Text->Translation(), m_InputTranslation);
+
+    m_Text->Material().Uniform<AMBIENT_LIGHT_COLOR>() = Leap::GL::Rgba<float>(1.0f, 1.0f, 1.0f, 1.0f);
+    m_Text->LinearTransformation() = clockScale * rotation;
+    PrimitiveBase::DrawSceneGraph(*m_Text, m_Renderer);
+  }
+
+  {
+    const Eigen::Matrix3d calendarExpandedMatrix = Eigen::Matrix3d::Identity();
+    //const Eigen::Matrix3d calendarExpandedMatrix = faceCameraMatrix(m_ExpandedPrimitive->Translation(), m_InputTranslation);
+    const double size = 4 * spacing;
+    m_ExpandedPrimitive->SetTexture(m_CalendarExpanded->GetTexture());
+    m_ExpandedPrimitive->SetScaleBasedOnTextureSize();
+    const double scale = (size + 2*radius) / m_ExpandedPrimitive->Size().y();
+    //m_ExpandedPrimitive->Translation() << 50, 150 - size/2.0, curZ;
+    m_ExpandedPrimitive->Translation() << spacing + scale*0.5*m_ExpandedPrimitive->Size().x(), radius - scale*0.5*m_ExpandedPrimitive->Size().y(), 0.0;
+    m_ExpandedPrimitive->LinearTransformation() = scale * calendarExpandedMatrix;
+    //PrimitiveBase::DrawSceneGraph(*m_ExpandedPrimitive, m_Renderer);
+  }
 
   {
     m_IconDisk->Material().Uniform<AMBIENT_LIGHT_COLOR>() = calendarColor;
@@ -294,9 +301,31 @@ void Scene::drawUI() const {
     m_IconPrimitive->SetScaleBasedOnTextureSize();
     const double scale = 1.5 * m_IconDisk->Radius() / m_IconPrimitive->Size().norm();
     m_IconDisk->Translation() << curX, curY, curZ;
+    m_IconDisk->LinearTransformation() = faceCameraMatrix(m_IconDisk->Translation(), m_InputTranslation);
     m_IconPrimitive->LinearTransformation() = scale * Eigen::Matrix3d::Identity();
+    if (m_ShowCalendar) {
+      m_IconDisk->AddChild(m_ExpandedPrimitive);
+    }
     PrimitiveBase::DrawSceneGraph(*m_IconDisk, m_Renderer);
+    if (m_ShowCalendar) {
+      m_IconDisk->RemoveChild(m_ExpandedPrimitive);
+    }
     curY -= spacing;
+  }
+
+  for (const auto& it : m_TrackedHands) {
+    const HandInfo& trackedHand = *it.second;
+    HandInfo::IntersectionVector intersections = trackedHand.IntersectDisk(*m_IconDisk);
+    if (intersections.empty()) {
+      if (m_ButtonCooldown) {
+        m_ButtonCooldown = false;
+      }
+    } else {
+      if (!m_ButtonCooldown) {
+        m_ShowCalendar = !m_ShowCalendar;
+        m_ButtonCooldown = true;
+      }
+    }
   }
 
   {
@@ -305,6 +334,7 @@ void Scene::drawUI() const {
     m_IconPrimitive->SetScaleBasedOnTextureSize();
     const double scale = 1.5 * m_IconDisk->Radius() / m_IconPrimitive->Size().norm();
     m_IconDisk->Translation() << curX, curY, curZ;
+    m_IconDisk->LinearTransformation() = faceCameraMatrix(m_IconDisk->Translation(), m_InputTranslation);
     m_IconPrimitive->LinearTransformation() = scale * Eigen::Matrix3d::Identity();
     PrimitiveBase::DrawSceneGraph(*m_IconDisk, m_Renderer);
     curY -= spacing;
@@ -316,6 +346,7 @@ void Scene::drawUI() const {
     m_IconPrimitive->SetScaleBasedOnTextureSize();
     const double scale = 1.5 * m_IconDisk->Radius() / m_IconPrimitive->Size().norm();
     m_IconDisk->Translation() << curX, curY, curZ;
+    m_IconDisk->LinearTransformation() = faceCameraMatrix(m_IconDisk->Translation(), m_InputTranslation);
     m_IconPrimitive->LinearTransformation() = scale * Eigen::Matrix3d::Identity();
     PrimitiveBase::DrawSceneGraph(*m_IconDisk, m_Renderer);
     curY -= spacing;
@@ -327,6 +358,7 @@ void Scene::drawUI() const {
     m_IconPrimitive->SetScaleBasedOnTextureSize();
     const double scale = 1.5 * m_IconDisk->Radius() / m_IconPrimitive->Size().norm();
     m_IconDisk->Translation() << curX, curY, curZ;
+    m_IconDisk->LinearTransformation() = faceCameraMatrix(m_IconDisk->Translation(), m_InputTranslation);
     m_IconPrimitive->LinearTransformation() = scale * Eigen::Matrix3d::Identity();
     PrimitiveBase::DrawSceneGraph(*m_IconDisk, m_Renderer);
     curY -= spacing;
@@ -338,35 +370,11 @@ void Scene::drawUI() const {
     m_IconPrimitive->SetScaleBasedOnTextureSize();
     const double scale = 1.5 * m_IconDisk->Radius() / m_IconPrimitive->Size().norm();
     m_IconDisk->Translation() << curX, curY, curZ;
+    m_IconDisk->LinearTransformation() = faceCameraMatrix(m_IconDisk->Translation(), m_InputTranslation);
     m_IconPrimitive->LinearTransformation() = scale * Eigen::Matrix3d::Identity();
     PrimitiveBase::DrawSceneGraph(*m_IconDisk, m_Renderer);
     curY -= spacing;
   }
-
-  {
-    const Eigen::Matrix3d calendarExpandedMatrix = Eigen::Matrix3d::Identity();
-    //const Eigen::Matrix3d calendarExpandedMatrix = faceCameraMatrix(m_ExpandedPrimitive->Translation(), m_InputTranslation);
-    const double size = 4 * spacing;
-    m_ExpandedPrimitive->SetTexture(m_CalendarExpanded->GetTexture());
-    m_ExpandedPrimitive->SetScaleBasedOnTextureSize();
-    const double scale = (size + 2*radius) / m_ExpandedPrimitive->Size().y();
-    m_ExpandedPrimitive->Translation() << 300, 150 - size/2.0, curZ;
-    m_ExpandedPrimitive->LinearTransformation() = scale * calendarExpandedMatrix;
-    PrimitiveBase::DrawSceneGraph(*m_ExpandedPrimitive, m_Renderer);
-
-    for (const auto& it : m_TrackedHands) {
-      const HandInfo& trackedHand = *it.second;
-      HandInfo::IntersectionVector intersections = trackedHand.IntersectRectangle(*m_ExpandedPrimitive);
-      for (const auto& intersection : intersections) {
-        m_IntersectionDisk->Translation() = intersection.point;
-        m_IntersectionDisk->LinearTransformation() = calendarExpandedMatrix;
-        m_IntersectionDisk->SetRadius(1.25*intersection.radius);
-        m_IntersectionDisk->Material().Uniform<AMBIENT_LIGHT_COLOR>() = makeIntersectionDiskColor(intersection.confidence);
-        PrimitiveBase::DrawSceneGraph(*m_IntersectionDisk, m_Renderer);
-      }
-    }
-  }
-
 }
 
 Leap::GL::Rgba<float> Scene::makeIntersectionDiskColor(double confidence) {

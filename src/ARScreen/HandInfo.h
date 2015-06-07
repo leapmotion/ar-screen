@@ -48,6 +48,7 @@ public:
   typedef std::vector<Intersection, Eigen::aligned_allocator<Intersection>> IntersectionVector;
 
   IntersectionVector IntersectRectangle(const RectanglePrim& prim) const;
+  IntersectionVector IntersectDisk(const Disk& prim) const;
 
   static const int BONES_PER_FINGER = static_cast<int>(Leap::Bone::TYPE_DISTAL) + 1;
   static const int POINTS_PER_FINGER = BONES_PER_FINGER + 1;

@@ -25,6 +25,8 @@ set(ARScreen_SOURCES
   HandInfo.cpp
   ImagePassthrough.cpp
   ImagePassthrough.h
+  Mirror.h
+  Mirror.cpp
   Resource.h
   ResourceManager.h
   Scene.h

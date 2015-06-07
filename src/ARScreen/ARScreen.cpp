@@ -9,6 +9,8 @@
 #include "utility/PlatformInitializer.h"
 #include "utility/Utilities.h"
 
+#include "Mirror.h"
+
 #include <iostream>
 #include <stdexcept>
 
@@ -71,15 +73,19 @@ void ARScreen::Main(void) {
   if (!m_Oculus.Init()) {
     Globals::haveOculus = false;
     std::cout << "No Oculus detected" << std::endl;
+    m_ShowMirror = false;
   } else {
     Globals::haveOculus = true;
     const ovrVector2i windowsPos = m_Oculus.GetWindowsPos();
     m_Window.SetWindowPos(windowsPos.x, windowsPos.y);
     m_Window.SetWindowSize(m_Oculus.GetHMDWidth(), m_Oculus.GetHMDHeight());
+    m_ShowMirror = true;
   }
 
   m_Scene.Init();
   m_Controller.addListener(m_Listener);
+
+  InitMirror();
 
   // Dispatch events until told to quit:
   Globals::prevFrameTime = std::chrono::steady_clock::now();
@@ -191,4 +197,21 @@ void ARScreen::Render() {
     m_Window.Present();
   }
 
+}
+
+void ARScreen::InitMirror() {
+#if _WIN32
+  if (m_ShowMirror) {
+    m_MirrorThread = std::thread(RunMirror, m_Window.GetWindowHandle(), std::ref(m_MirrorHWND));
+  }
+#endif
+}
+
+void ARScreen::ShutdownMirror() {
+  if (m_MirrorThread.joinable()) {
+#if _WIN32
+    PostMessage(m_MirrorHWND, WM_CLOSE, 0, 0);
+#endif
+    m_MirrorThread.join();
+  }
 }

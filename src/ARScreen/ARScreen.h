@@ -25,6 +25,9 @@ public:
   void Update();
   void Render();
 
+  void InitMirror();
+  void ShutdownMirror();
+
   AutoFired<Updatable> m_update;
 
   Scene m_Scene;
@@ -32,4 +35,11 @@ public:
   OculusVR m_Oculus;
   Leap::Controller m_Controller;
   LeapListener m_Listener;
+
+  // for mirroring
+  std::thread m_MirrorThread;
+#if _WIN32
+  HWND m_MirrorHWND;
+#endif
+  bool m_ShowMirror;
 };

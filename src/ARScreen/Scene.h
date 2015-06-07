@@ -4,9 +4,11 @@
 #include "HandInfo.h"
 #include "TextureFont/TextPrimitive.h"
 #include "GLTexture2Image/GLTexture2Image.h"
+#include "utility/Animation.h"
 
 class Scene {
 public:
+  Scene();
   void Init();
   void SetInputTransform(const EigenTypes::Matrix3x3& rotation, const EigenTypes::Vector3& translation);
   void Update(const std::deque<Leap::Frame>& frames);
@@ -28,6 +30,7 @@ private:
   mutable RenderState m_Renderer;
   std::shared_ptr<ImagePassthrough> m_ImagePassthrough;
 
+  Leap::Frame m_PrevFrame;
   Leap::Frame m_CurFrame;
   HandInfoMap m_TrackedHands;
 
@@ -47,4 +50,6 @@ private:
   GLTexture2ImageRef m_TextsIcon;
 
   std::shared_ptr<Disk> m_IntersectionDisk;
+  Smoothed<Eigen::Vector3d> m_ScreenPositionSmoother;
+  Smoothed<Eigen::Matrix3d> m_ScreenRotationSmoother;
 };

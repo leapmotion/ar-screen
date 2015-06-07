@@ -4,6 +4,12 @@
 #include "WindowManager.h"
 #include "Globals.h"
 
+Scene::Scene() : m_ScreenPositionSmoother(Eigen::Vector3d::Zero()), m_ScreenRotationSmoother(Eigen::Matrix3d::Identity())
+{
+  m_ScreenPositionSmoother.SetSmoothStrength(0.9f);
+  m_ScreenRotationSmoother.SetSmoothStrength(0.9f);
+}
+
 void Scene::Init() {
   m_InputRotation = EigenTypes::Matrix3x3::Identity();
   m_InputTranslation = EigenTypes::Vector3::Zero();
@@ -33,8 +39,8 @@ void Scene::SetInputTransform(const EigenTypes::Matrix3x3& rotation, const Eigen
 
 void Scene::Update(const std::deque<Leap::Frame>& frames) {
   for (size_t i = 0; i < frames.size(); i++) {
-    Leap::Frame prevFrame = m_CurFrame;
-    const double prevTimeSeconds = timestampToSeconds(prevFrame.timestamp());
+    m_PrevFrame = m_CurFrame;
+    const double prevTimeSeconds = timestampToSeconds(m_PrevFrame.timestamp());
     m_CurFrame = frames[i];
     const double curTimeSeconds = timestampToSeconds(m_CurFrame.timestamp());
     const float leapDeltaTime = static_cast<float>(curTimeSeconds - prevTimeSeconds);
@@ -43,8 +49,30 @@ void Scene::Update(const std::deque<Leap::Frame>& frames) {
     }
 
     updateTrackedHands(leapDeltaTime);
-    leapInteract(leapDeltaTime);
+
+    const double scale = m_InputRotation.col(0).norm();
+
+    const Leap::TrackedQuad quad = m_CurFrame.trackedQuad();
+    if (quad.isValid() && quad.visible()) {
+      // ratio of tracked quad to monitor dimensions
+      const double horizScale = 1.143;
+      const double vertScale = 1.286;
+
+      Globals::haveScreen = true;
+      Globals::screenWidth = horizScale * scale * quad.width();
+      Globals::screenHeight = vertScale * scale * quad.height();
+      m_ScreenPositionSmoother.SetGoal(m_InputRotation * quad.position().toVector3<Eigen::Vector3d>() + m_InputTranslation);
+      m_ScreenRotationSmoother.SetGoal(m_InputRotation * toEigen(quad.orientation()));
+    }
+    m_ScreenPositionSmoother.Update(leapDeltaTime);
+    m_ScreenRotationSmoother.Update(leapDeltaTime);
   }
+  Globals::screenPos = m_ScreenPositionSmoother.Value();
+  Globals::screenBasis = m_ScreenRotationSmoother.Value();
+  const double prevTimeSeconds = timestampToSeconds(m_PrevFrame.timestamp());
+  const double curTimeSeconds = timestampToSeconds(m_CurFrame.timestamp());
+  const float leapDeltaTime = static_cast<float>(curTimeSeconds - prevTimeSeconds);
+  leapInteract(leapDeltaTime);
 
   if (!frames.empty()) {
     m_ImagePassthrough->Update(frames.back().images());

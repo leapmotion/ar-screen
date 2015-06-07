@@ -34,7 +34,6 @@ void FakeWindow::Update(const WindowTransform& transform, bool texture, double d
     newPos.x = windowPos.x();
     newPos.y = windowPos.y();
     m_Window.SetPosition(newPos);
-    //m_UpdatePosition = false;
   }
 
   m_OSPosition = windowPos + 0.5*windowSize;
@@ -86,6 +85,7 @@ void FakeWindow::Interact(const WindowTransform& transform, const HandInfoMap& h
   }
 
   if (movementsPerHand.size() > 0) {
+    m_Window.SetFocus();
     m_PositionVel /= movementsPerHand.size();
   }
 
@@ -159,21 +159,33 @@ void WindowManager::OnResize(OSWindow& window) {
 }
 
 void WindowManager::Tick(std::chrono::duration<double> deltaT) {
+  static double t = 0;
+  t += deltaT.count();
   AutowiredFast<OSVirtualScreen> fullScreen;
   if (fullScreen) {
     auto screen = fullScreen->PrimaryScreen();
     const Eigen::Vector2d screenOrigin(screen.Bounds().origin.x, screen.Bounds().origin.y);
     const Eigen::Vector2d screenSize(screen.Bounds().size.width, screen.Bounds().size.height);
-    const Eigen::Vector2d fullScreenSize(fullScreen->Bounds().size.width, fullScreen->Bounds().size.height);
     m_WindowTransform->center = screenOrigin + 0.5*screenSize;
-    m_WindowTransform->scale = 1500 / fullScreenSize.norm();
-    m_WindowTransform->offset << 0, 200, -100.0;
-    m_WindowTransform->offset += Globals::offset;
+
+    if (Globals::haveScreen) {
+      const double physicalDiag = std::sqrt(Globals::screenWidth * Globals::screenWidth + Globals::screenHeight * Globals::screenHeight);
+      m_WindowTransform->scale = physicalDiag / screenSize.norm();
+      m_WindowTransform->rotation = Globals::screenBasis;
+      m_WindowTransform->offset = Globals::screenPos + Eigen::Vector3d(0, Globals::screenHeight, 0);
+    } else {
+      m_WindowTransform->scale = 500 / screenSize.norm();
+      m_WindowTransform->offset << 0, 300, -100.0;
+    }
   }
 
-  int maxZ = 0;
+  int maxZ = -1;
+  int maxZForce = -1;
   for (const auto& it : m_Windows) {
     const int z = it.second->m_Window.GetZOrder();
+    if (it.second->m_ForceUpdate) {
+      maxZForce = std::max(maxZForce, z);
+    }
     maxZ = std::max(maxZ, z);
   }
 
@@ -181,7 +193,7 @@ void WindowManager::Tick(std::chrono::duration<double> deltaT) {
   int curCounter = 0;
   for (const auto& it : m_Windows) {
     const int z = it.second->m_Window.GetZOrder();
-    const bool updateTexture = (curCounter == m_RoundRobinCounter || z == maxZ || it.second->m_ForceUpdate);
+    const bool updateTexture = (curCounter == m_RoundRobinCounter || z == maxZ || (z == maxZForce && it.second->m_ForceUpdate));
     it.second->Update(*m_WindowTransform, updateTexture, deltaT.count());
     curCounter++;
   }

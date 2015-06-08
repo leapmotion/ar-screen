@@ -60,6 +60,9 @@ private:
   mutable bool m_ButtonCooldown;
   mutable Smoothed<float> m_CalendarOpacity;
   mutable Smoothed<float> m_ButtonAnimation;
+  mutable bool m_CalendarPressed;
+  mutable bool m_DarkModePressed;
+  mutable Smoothed<float> m_ImageOpacity;
 
   std::chrono::steady_clock::time_point m_GestureStart;
   bool m_ActivationGesture;

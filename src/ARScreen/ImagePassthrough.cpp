@@ -69,13 +69,13 @@ void ImagePassthrough::DrawStencilObject(PrimitiveBase* obj, RenderState& render
   m_Textures[m_ActiveTexture]->Unbind();
 }
 
-void ImagePassthrough::Draw(RenderState& renderState) const {
+void ImagePassthrough::Draw(RenderState& renderState, float opacity) const {
   if (m_ImageBytes[m_ActiveTexture] == 0 || m_DistortionBytes[m_ActiveTexture] == 0) {
     return;
   }
   m_Shader->Bind();
   m_Shader->UploadUniform<GL_FLOAT>("gamma", m_Color ? 0.56f : 0.8f);
-  m_Shader->UploadUniform<GL_FLOAT>("brightness", 1.0f);
+  m_Shader->UploadUniform<GL_FLOAT>("brightness", opacity);
   m_Shader->UploadUniform<GL_BOOL>("use_texture", true);
   m_Shader->UploadUniform<GL_SAMPLER_2D>("texture", 0);
   m_Shader->UploadUniform<GL_SAMPLER_2D>("distortion", 1);

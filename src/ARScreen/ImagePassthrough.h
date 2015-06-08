@@ -12,7 +12,7 @@ public:
   void Update(const Leap::ImageList& images);
   void SetUseStencil(bool use) { m_UseStencil = use; }
   void DrawStencilObject(PrimitiveBase* obj, RenderState& renderState, float viewWidth, float viewX, float viewHeight, float l00, float l11, float l03, float opacity) const;
-  void Draw(RenderState& renderState) const;
+  void Draw(RenderState& renderState, float opacity = 1.0f) const;
 
 private:
 

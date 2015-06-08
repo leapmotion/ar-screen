@@ -51,7 +51,7 @@ uint32_t OSWindowWin::GetOwnerPid(void) {
   return pid;
 }
 
-void OSWindowWin::TakeSnapshot(void) {
+int OSWindowWin::TakeSnapshot(void) {
   HDC hdc = GetWindowDC(hwnd);
   auto cleanhdc = MakeAtExit([&] {ReleaseDC(hwnd, hdc); });
 
@@ -62,9 +62,9 @@ void OSWindowWin::TakeSnapshot(void) {
     bmSz.cx = rc.right - rc.left;
     bmSz.cy = rc.bottom - rc.top;
   }
-  if(!bmSz.cx || !bmSz.cy)
+  if (!bmSz.cx || !bmSz.cy)
     // Cannot create a window texture, window is gone
-    return;
+    return m_counter;
 
   if(m_szBitmap.cx != bmSz.cx || m_szBitmap.cy != bmSz.cy) {
     BITMAPINFO bmi;
@@ -99,11 +99,11 @@ void OSWindowWin::TakeSnapshot(void) {
   // Bit blit time to get at those delicious pixels
   BitBlt(m_hBmpDC.get(), 0, 0, m_szBitmap.cx, m_szBitmap.cy, hdc, 0, 0, SRCCOPY);
   m_lock.clear(std::memory_order_release); // release lock
+
+  return ++m_counter;
 }
 
 std::shared_ptr<ImagePrimitive> OSWindowWin::GetWindowTexture(std::shared_ptr<ImagePrimitive> img)  {
-  TakeSnapshot(); // FOR NOW, WE WILL CONTINUE TO TAKE THE SNAPSHOT BEFORE UPLOADING TO GPU -- FIXME
-
   if (!m_phBitmapBits) {
     return img;
   }

@@ -16,7 +16,7 @@ public:
   bool IsValid(void) override;
   uint32_t GetOwnerPid(void) override;
   uint64_t GetWindowID(void) const override { return (uint64_t) m_windowID; }
-  void TakeSnapshot(void) override;
+  int TakeSnapshot(void) override;
   std::shared_ptr<ImagePrimitive> GetWindowTexture(std::shared_ptr<ImagePrimitive> img) override;
   bool GetFocus(void) override;
   void SetFocus(void) override;

@@ -67,7 +67,7 @@ uint32_t OSWindowMac::GetOwnerPid(void) {
   return static_cast<uint32_t>([[m_info objectForKey:(id)kCGWindowOwnerPID] intValue]);
 }
 
-void OSWindowMac::TakeSnapshot(void) {
+int OSWindowMac::TakeSnapshot(void) {
   CGImageRef imageRef = CGWindowListCreateImage(CGRectNull, kCGWindowListOptionIncludingWindow,
                                                 m_windowID, kCGWindowImageBoundsIgnoreFraming |
                                                             kCGWindowImageNominalResolution);
@@ -115,6 +115,8 @@ void OSWindowMac::TakeSnapshot(void) {
   if (imageRef) {
     CFRelease(imageRef);
   }
+
+  return 0;
 }
 
 std::shared_ptr<ImagePrimitive> OSWindowMac::GetWindowTexture(std::shared_ptr<ImagePrimitive> img) {

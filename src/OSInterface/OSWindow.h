@@ -61,7 +61,7 @@ public:
   /// Take a snapshot of the current window contents. Ideally this is called in a separate
   /// thread, with the cached texture readily available for use by GetWindowTexture.
   /// </remarks>
-  virtual void TakeSnapshot(void) =  0;
+  virtual int TakeSnapshot(void) =  0;
 
   /// <summary>
   /// Copies an image corresponding to a window into the specified image primitive

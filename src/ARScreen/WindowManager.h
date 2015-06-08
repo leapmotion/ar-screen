@@ -1,5 +1,6 @@
 #pragma once
 
+#include <autowiring/BasicThread.h>
 #include "OSInterface/OSWindow.h"
 #include "OSInterface/OSWindowEvent.h"
 #include "utility/Updatable.h"
@@ -32,7 +33,7 @@ struct WindowTransform {
 class FakeWindow {
 public:
   FakeWindow(OSWindow& window);
-  void Update(const WindowTransform& transform, bool texture, double deltaTime);
+  void Update(const WindowTransform& transform, double deltaTime);
   void Interact(const WindowTransform& transform, const HandInfoMap& hands, float deltaTime);
   std::shared_ptr<ImagePrimitive> m_Texture;
   OSWindow& m_Window;
@@ -45,12 +46,15 @@ public:
   Smoothed<double> m_ZOrder;
   Smoothed<Eigen::Vector3d, 10> m_PositionOffset;
   Smoothed<float, 10> m_Opacity;
+  bool m_HaveSnapshot;
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 class WindowManager :
   public OSWindowEvent,
-  public Updatable {
+  public Updatable,
+  public BasicThread
+  {
 public:
   WindowManager();
 
@@ -70,4 +74,8 @@ public:
   int m_RoundRobinCounter;
   std::shared_ptr<WindowTransform> m_WindowTransform;
   bool m_Active;
+private:
+  void Run() override;
+  void OnStop(bool graceful) override;
+  std::mutex m_WindowsMutex;
 };

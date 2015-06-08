@@ -3,15 +3,16 @@
 #include "utility/Utilities.h"
 #include "OSInterface/OSVirtualScreen.h"
 
-FakeWindow::FakeWindow(OSWindow& window) : m_Window(window), m_UpdateSize(false), m_UpdatePosition(false), m_ForceUpdate(false), m_ZOrder(0.0), m_PositionOffset(Eigen::Vector3d::Zero()), m_Opacity(0.0f) {
+FakeWindow::FakeWindow(OSWindow& window) : m_Window(window), m_UpdateSize(false), m_UpdatePosition(false), m_ForceUpdate(false), m_ZOrder(0.0), m_PositionOffset(Eigen::Vector3d::Zero()), m_Opacity(0.0f), m_HaveSnapshot(false) {
   m_Texture = std::shared_ptr<ImagePrimitive>(new ImagePrimitive());
   m_ZOrder.SetSmoothStrength(0.7f);
 }
 
-void FakeWindow::Update(const WindowTransform& transform, bool texture, double deltaTime) {
-  if (texture) {
-    // todo: move CPU part of texture retrieval to a separate thread, only do GPU upload here
+void FakeWindow::Update(const WindowTransform& transform, double deltaTime) {
+  if (m_HaveSnapshot) {
+    // only performs the GPU upload of the most recent snapshot
     m_Texture = m_Window.GetWindowTexture(m_Texture);
+    m_HaveSnapshot = false;
   }
   OSPoint pos;
   OSSize size;
@@ -59,7 +60,7 @@ void FakeWindow::Update(const WindowTransform& transform, bool texture, double d
   m_Texture->Translation().z() += 20.0 * m_ZOrder.Value();
   m_Texture->Translation() += m_PositionOffset.Value();
   const Eigen::Matrix3d scaleMatrix = (transform.scale * Eigen::Vector3d(1, -1, 1)).asDiagonal();
-  //m_Texture->LinearTransformation() = faceCameraMatrix(m_Texture->Translation(), Globals::userPos) * scaleMatrix;
+  //m_Texture->LinearTransformation() = faceCameraMatrix(m_Texture->Translation(), Globals::userPos, false) * scaleMatrix;
   m_Texture->LinearTransformation() = scaleMatrix;
 
   m_Texture->Material().Uniform<AMBIENT_LIGHT_COLOR>().A() = m_Opacity.Value();
@@ -209,16 +210,9 @@ void WindowManager::Tick(std::chrono::duration<double> deltaT) {
     }
   }
 
-  int minZ, maxZ;
-  GetZRange(minZ, maxZ);
-
-  m_RoundRobinCounter = (m_RoundRobinCounter+1) % m_Windows.size();
-  int curCounter = 0;
+  std::unique_lock<std::mutex> lock(m_WindowsMutex);
   for (const auto& it : m_Windows) {
-    const int z = it.second->m_Window.GetZOrder();
-    const bool updateTexture = (curCounter == m_RoundRobinCounter || z == maxZ || it.second->m_ForceUpdate);
-    it.second->Update(*m_WindowTransform, updateTexture, deltaT.count());
-    curCounter++;
+    it.second->Update(*m_WindowTransform, deltaT.count());
   }
 }
 
@@ -262,4 +256,31 @@ void WindowManager::GetZRange(int& min, int& max) const {
     min = std::min(min, z);
     max = std::max(max, z);
   }
+}
+
+void WindowManager::Run() {
+  // takes snapshots in a background thread, GPU uploads are done in the main Render thread
+  while (!ShouldStop()) {
+    int minZ, maxZ;
+    GetZRange(minZ, maxZ);
+    if (!m_Windows.empty()) {
+      std::unique_lock<std::mutex> lock(m_WindowsMutex);
+      m_RoundRobinCounter = (m_RoundRobinCounter+1) % m_Windows.size();
+      int curCounter = 0;
+      for (const auto& it : m_Windows) {
+        const int z = it.second->m_Window.GetZOrder();
+        const bool updateTexture = (curCounter == m_RoundRobinCounter || z == maxZ || it.second->m_ForceUpdate);
+        if (updateTexture) {
+          it.second->m_Window.TakeSnapshot();
+          it.second->m_HaveSnapshot = true;
+        }
+        curCounter++;
+      }
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
+}
+
+void WindowManager::OnStop(bool graceful) {
+
 }

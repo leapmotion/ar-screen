@@ -140,7 +140,7 @@ void RunMirror(HWND parentHwnd, HWND& outHwnd) {
     outHwnd = CreateWindow(
              TEXT("Mirror"),                /* Class Name */
              TEXT("Mirror"),                /* Title */
-             WS_OVERLAPPEDWINDOW,            /* Style */
+             0,            /* Style */
              CW_USEDEFAULT, CW_USEDEFAULT,   /* Position */
              CW_USEDEFAULT, CW_USEDEFAULT,   /* Size */
              NULL,                           /* Parent */
@@ -149,6 +149,16 @@ void RunMirror(HWND parentHwnd, HWND& outHwnd) {
              &parentHwnd);
 
     ShowWindow(outHwnd, SW_MAXIMIZE);
+
+    LONG lStyle = GetWindowLong(outHwnd, GWL_STYLE);
+    lStyle &= ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZE | WS_MAXIMIZE | WS_SYSMENU);
+    SetWindowLong(outHwnd, GWL_STYLE, lStyle);
+
+    LONG flags = ::GetWindowLongA(outHwnd, GWL_EXSTYLE) | WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOPMOST;
+    flags &= ~(WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE);
+    SetWindowLongA(outHwnd, GWL_EXSTYLE, flags);
+
+    ::SetWindowPos(outHwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 
     while (GetMessage(&msg, NULL, 0, 0)) {
       TranslateMessage(&msg);

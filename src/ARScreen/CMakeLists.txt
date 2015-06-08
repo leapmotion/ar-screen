@@ -13,6 +13,9 @@ set(ARScreen_RESOURCES
   ${CMAKE_SOURCE_DIR}/images/phone.png
   ${CMAKE_SOURCE_DIR}/images/screen-record.png
   ${CMAKE_SOURCE_DIR}/images/texts.png
+  ${CMAKE_SOURCE_DIR}/images/david.png
+  ${CMAKE_SOURCE_DIR}/images/jimmy.png
+  ${CMAKE_SOURCE_DIR}/images/jon.png
 )
 
 set(ARScreen_SOURCES

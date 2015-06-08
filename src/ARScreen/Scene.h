@@ -24,6 +24,8 @@ private:
   void drawUI() const;
   void createNewsFeed();
   void drawNewsFeed() const;
+  void createPeople();
+  void drawPeople() const;
   static Leap::GL::Rgba<float> makeIntersectionDiskColor(double confidence);
 
   EigenTypes::Matrix3x3 m_InputRotation;
@@ -66,4 +68,10 @@ private:
   std::vector<std::shared_ptr<TextPrimitive>> m_NewsFeedItems;
   mutable double m_FeedScroll;
   std::shared_ptr<RectanglePrim> m_NewsFeedRect;
+
+  GLTexture2ImageRef m_Person1;
+  GLTexture2ImageRef m_Person2;
+  GLTexture2ImageRef m_Person3;
+  std::shared_ptr<Disk> m_PersonBG;
+  std::shared_ptr<ImagePrimitive> m_PersonPrimitive;
 };

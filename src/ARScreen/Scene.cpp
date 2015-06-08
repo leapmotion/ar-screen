@@ -41,6 +41,8 @@ void Scene::Init() {
   createUI();
 
   createNewsFeed();
+
+  createPeople();
 }
 
 void Scene::SetInputTransform(const EigenTypes::Matrix3x3& rotation, const EigenTypes::Vector3& translation) {
@@ -120,6 +122,7 @@ void Scene::Render(const Eigen::Matrix4f& proj, const Eigen::Matrix4f& view, int
   drawFakeMouse();
   drawUI();
   drawNewsFeed();
+  drawPeople();
 
   m_Renderer.GetModelView().Matrix().setIdentity();
   glDisable(GL_DEPTH_TEST);
@@ -563,6 +566,74 @@ void Scene::drawNewsFeed() const {
   }
 
   PrimitiveBase::DrawSceneGraph(*m_NewsFeedRect, m_Renderer);
+}
+
+void Scene::createPeople() {
+  m_Person1 = GLTexture2ImageRef(new GLTexture2Image());
+  m_Person1->LoadPath("david.png");
+
+  m_Person2 = GLTexture2ImageRef(new GLTexture2Image());
+  m_Person2->LoadPath("jimmy.png");
+
+  m_Person3 = GLTexture2ImageRef(new GLTexture2Image());
+  m_Person3->LoadPath("jon.png");
+
+  m_PersonBG = std::shared_ptr<Disk>(new Disk());
+  m_PersonPrimitive = std::shared_ptr<ImagePrimitive>(new ImagePrimitive());
+
+  m_PersonBG->AddChild(m_PersonPrimitive);
+  m_PersonBG->SetRadius(35);
+  m_PersonPrimitive->Translation() << 0, 0, 2.0;
+}
+
+void Scene::drawPeople() const {
+  const double radius = m_PersonBG->Radius();
+  const double spacing = 3 * radius;
+  double curX = -spacing;
+  double curY = -125 + Globals::globalHeightOffset;
+  double curZ = -325;
+
+  const Leap::GL::Rgba<float> bgColor(1.0f, 1.0f, 1.0f, 0.15f);
+  const Leap::GL::Rgba<float> notifyColor(1.0f, 1.0f, 1.0f, 0.5f);
+
+  {
+    m_PersonBG->Material().Uniform<AMBIENT_LIGHT_COLOR>() = bgColor;
+    m_PersonBG->Translation() << curX, curY, curZ;
+    m_PersonBG->LinearTransformation() = faceCameraMatrix(m_PersonBG->Translation(), Globals::userPos, true);
+    m_PersonPrimitive->SetTexture(m_Person1->GetTexture());
+    m_PersonPrimitive->SetScaleBasedOnTextureSize();
+    const double scale = 2.5 * radius / m_PersonPrimitive->Size().norm();
+    m_PersonPrimitive->LinearTransformation() = scale * Eigen::Matrix3d::Identity();
+    PrimitiveBase::DrawSceneGraph(*m_PersonBG, m_Renderer);
+    curX += spacing;
+  }
+
+  {
+    m_PersonBG->Material().Uniform<AMBIENT_LIGHT_COLOR>() = bgColor;
+    m_PersonBG->Translation() << curX, curY, curZ;
+    m_PersonBG->LinearTransformation() = faceCameraMatrix(m_PersonBG->Translation(), Globals::userPos, true);
+    m_PersonPrimitive->SetTexture(m_Person2->GetTexture());
+    m_PersonPrimitive->SetScaleBasedOnTextureSize();
+    const double scale = 2.5 * radius / m_PersonPrimitive->Size().norm();
+    m_PersonPrimitive->LinearTransformation() = scale * Eigen::Matrix3d::Identity();
+    PrimitiveBase::DrawSceneGraph(*m_PersonBG, m_Renderer);
+    curX += spacing;
+  }
+
+  {
+    const double delayedTime = std::max(0.0, Globals::elapsedTimeSeconds - 15.0);
+    const double mult = 0.5*(std::sin(6*delayedTime) + 1.0);
+    const float blend = SmootherStep(mult*mult*mult*mult);
+    m_PersonBG->Material().Uniform<AMBIENT_LIGHT_COLOR>() = bgColor.BlendedWith(notifyColor, blend);
+    m_PersonBG->Translation() << curX, curY, curZ;
+    m_PersonBG->LinearTransformation() = faceCameraMatrix(m_PersonBG->Translation(), Globals::userPos, true);
+    m_PersonPrimitive->SetTexture(m_Person3->GetTexture());
+    m_PersonPrimitive->SetScaleBasedOnTextureSize();
+    const double scale = 2.5 * radius / m_PersonPrimitive->Size().norm();
+    m_PersonPrimitive->LinearTransformation() = scale * Eigen::Matrix3d::Identity();
+    PrimitiveBase::DrawSceneGraph(*m_PersonBG, m_Renderer);
+    curX += spacing;
+  }
 }
 
 Leap::GL::Rgba<float> Scene::makeIntersectionDiskColor(double confidence) {

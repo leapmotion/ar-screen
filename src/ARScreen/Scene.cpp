@@ -4,10 +4,13 @@
 #include "WindowManager.h"
 #include "Globals.h"
 
-Scene::Scene() : m_ScreenPositionSmoother(Eigen::Vector3d::Zero()), m_ScreenRotationSmoother(Eigen::Matrix3d::Identity())
+Scene::Scene() : m_ScreenPositionSmoother(Eigen::Vector3d::Zero()), m_ScreenRotationSmoother(Eigen::Matrix3d::Identity()), m_CalendarOpacity(0.0f), m_ButtonAnimation(1.0f)
 {
   m_ScreenPositionSmoother.SetSmoothStrength(0.9f);
   m_ScreenRotationSmoother.SetSmoothStrength(0.9f);
+  m_CalendarOpacity.SetSmoothStrength(0.6f);
+  m_CalendarOpacity.Update(0.1f);
+  m_ButtonAnimation.SetSmoothStrength(0.7f);
 }
 
 void Scene::Init() {
@@ -86,6 +89,9 @@ void Scene::Update(const std::deque<Leap::Frame>& frames) {
     m_ClockText->SetText(timeStrW, m_Font);
     m_ClockString = timeStrW;
   }
+
+  m_CalendarOpacity.Update((Globals::timeBetweenFrames.count()));
+  m_ButtonAnimation.Update((Globals::timeBetweenFrames.count()));
 }
 
 void Scene::Render(const Eigen::Matrix4f& proj, const Eigen::Matrix4f& view, int eyeIdx) const {
@@ -241,7 +247,8 @@ void Scene::drawWindows() const {
 }
 
 void Scene::createUI() {
-  m_IconDisk = std::shared_ptr<Disk>(new Disk);
+  m_IconDisk = std::shared_ptr<Disk>(new Disk());
+  m_AnimationDisk = std::shared_ptr<Disk>(new Disk());
   m_IconPrimitive = std::shared_ptr<ImagePrimitive>(new ImagePrimitive());
   m_ExpandedPrimitive = std::shared_ptr<ImagePrimitive>(new ImagePrimitive());
 
@@ -268,7 +275,6 @@ void Scene::createUI() {
 
   m_IconDisk->AddChild(m_IconPrimitive);
   m_IconPrimitive->Translation() << 0, 0, 5.0;
-  m_ShowCalendar = false;
   m_ButtonCooldown = false;
 }
 
@@ -293,13 +299,18 @@ void Scene::drawUI() const {
     m_ExpandedPrimitive->SetTexture(m_CalendarExpanded->GetTexture());
     m_ExpandedPrimitive->SetScaleBasedOnTextureSize();
     const double scale = (size + 2*radius) / m_ExpandedPrimitive->Size().y();
-    //m_ExpandedPrimitive->Translation() << 50, 150 - size/2.0, curZ;
     m_ExpandedPrimitive->Translation() << spacing + scale*0.5*m_ExpandedPrimitive->Size().x(), radius - scale*0.5*m_ExpandedPrimitive->Size().y(), 0.0;
     m_ExpandedPrimitive->LinearTransformation() = scale * calendarExpandedMatrix;
-    //PrimitiveBase::DrawSceneGraph(*m_ExpandedPrimitive, m_Renderer);
   }
 
   {
+    const float blend = m_ButtonAnimation.Value();
+    const float alpha = 0.85f * SmootherStep(1.0f - blend);
+    m_AnimationDisk->Material().Uniform<AMBIENT_LIGHT_COLOR>().A() = alpha;
+    const double origRadius = 1.1*m_IconDisk->Radius();
+    const double targetRadius = origRadius * 2.0;
+    m_AnimationDisk->SetRadius((1.0f-blend)*origRadius+ blend*targetRadius);
+    m_AnimationDisk->Translation() << 0.0, 0.0, -2.0;
     m_IconDisk->Material().Uniform<AMBIENT_LIGHT_COLOR>() = calendarColor;
     m_IconPrimitive->SetTexture(m_CalendarIcon->GetTexture());
     m_IconPrimitive->SetScaleBasedOnTextureSize();
@@ -307,12 +318,20 @@ void Scene::drawUI() const {
     m_IconDisk->Translation() << curX, curY, curZ;
     m_IconDisk->LinearTransformation() = faceCameraMatrix(m_IconDisk->Translation(), Globals::userPos, false);
     m_IconPrimitive->LinearTransformation() = scale * Eigen::Matrix3d::Identity();
-    if (m_ShowCalendar) {
+    const bool showCalendar = m_CalendarOpacity.Value() > 0.0001f;
+    m_ExpandedPrimitive->Material().Uniform<AMBIENT_LIGHT_COLOR>().A() = m_CalendarOpacity.Value();
+    if (showCalendar) {
       m_IconDisk->AddChild(m_ExpandedPrimitive);
     }
+    if (alpha > 0.00001f) {
+      m_IconDisk->AddChild(m_AnimationDisk);
+    }
     PrimitiveBase::DrawSceneGraph(*m_IconDisk, m_Renderer);
-    if (m_ShowCalendar) {
+    if (showCalendar) {
       m_IconDisk->RemoveChild(m_ExpandedPrimitive);
+    }
+    if (alpha > 0.00001f) {
+      m_IconDisk->RemoveChild(m_AnimationDisk);
     }
     curY -= spacing;
   }
@@ -321,13 +340,19 @@ void Scene::drawUI() const {
     const HandInfo& trackedHand = *it.second;
     HandInfo::IntersectionVector intersections = trackedHand.IntersectDisk(*m_IconDisk);
     if (intersections.empty()) {
-      if (m_ButtonCooldown) {
+      if (m_ButtonCooldown && m_ButtonAnimation.Value() > 0.95f) {
         m_ButtonCooldown = false;
       }
     } else {
       if (!m_ButtonCooldown) {
-        m_ShowCalendar = !m_ShowCalendar;
         m_ButtonCooldown = true;
+        if (m_CalendarOpacity.Goal() == 0.0f) {
+          m_CalendarOpacity.SetGoal(1.0f);
+        } else {
+          m_CalendarOpacity.SetGoal(0.0f);
+        }
+        m_ButtonAnimation.SetImmediate(0.0f);
+        m_ButtonAnimation.SetGoal(1.0f);
       }
     }
   }

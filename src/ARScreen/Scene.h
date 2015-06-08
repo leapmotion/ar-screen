@@ -40,6 +40,7 @@ private:
   std::wstring m_ClockString;
   std::shared_ptr<Sphere> m_MouseSphere;
 
+  std::shared_ptr<Disk> m_AnimationDisk;
   std::shared_ptr<Disk> m_IconDisk;
   std::shared_ptr<ImagePrimitive> m_IconPrimitive;
   std::shared_ptr<ImagePrimitive> m_ExpandedPrimitive;
@@ -54,8 +55,9 @@ private:
   Smoothed<Eigen::Vector3d> m_ScreenPositionSmoother;
   Smoothed<Eigen::Matrix3d> m_ScreenRotationSmoother;
 
-  mutable bool m_ShowCalendar;
   mutable bool m_ButtonCooldown;
+  mutable Smoothed<float> m_CalendarOpacity;
+  mutable Smoothed<float> m_ButtonAnimation;
 
   std::vector<std::shared_ptr<TextPrimitive>> m_NewsFeedItems;
   mutable double m_FeedScroll;

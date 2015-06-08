@@ -4,7 +4,13 @@
 #include "WindowManager.h"
 #include "Globals.h"
 
-Scene::Scene() : m_ScreenPositionSmoother(Eigen::Vector3d::Zero()), m_ScreenRotationSmoother(Eigen::Matrix3d::Identity()), m_CalendarOpacity(0.0f), m_ButtonAnimation(1.0f)
+Scene::Scene() :
+  m_ScreenPositionSmoother(Eigen::Vector3d::Zero()),
+  m_ScreenRotationSmoother(Eigen::Matrix3d::Identity()),
+  m_CalendarOpacity(0.0f),
+  m_ButtonAnimation(1.0f),
+  m_ActivationGesture(false),
+  m_DeactivationGesture(false)
 {
   m_ScreenPositionSmoother.SetSmoothStrength(0.9f);
   m_ScreenRotationSmoother.SetSmoothStrength(0.9f);
@@ -191,6 +197,62 @@ void Scene::leapInteract(float deltaTime) {
     }
   }
   m_FeedScroll += movement;
+
+  if (manager) {
+    // detect activation gesture
+    int numActivatingHands = 0;
+    int numDeactivatingHands = 0;
+    if (m_TrackedHands.size() >= 2) {
+      for (const auto& it : m_TrackedHands) {
+        const HandInfo& trackedHand = *it.second;
+        const Leap::Hand& hand = trackedHand.GetLastSeenHand();
+        const bool confident = trackedHand.GetConfidence() > 0.8;
+        const bool facingOutward = hand.palmNormal().y > 0.8f;
+        const bool fast = hand.palmVelocity().magnitude() > 600;
+        const float yNorm = hand.palmVelocity().normalized().y;
+        const bool pulling = yNorm < -0.8f;
+        const bool pushing = yNorm > 0.8f;
+        if (confident && facingOutward && fast) {
+          if (pulling) {
+            numActivatingHands++;
+          } else if (pushing) {
+            numDeactivatingHands++;
+          }
+        }
+      }
+    }
+
+    const double gestureTime = 0.15;
+    if (numActivatingHands == 2) {
+      if (!m_ActivationGesture) {
+        m_GestureStart = Globals::curFrameTime;
+        m_ActivationGesture = true;
+      } else {
+        const double timeDiff = (Globals::curFrameTime - m_GestureStart).count();
+        if (timeDiff >= gestureTime && !manager->m_Active) {
+          manager->Activate();
+          m_ActivationGesture = false;
+        }
+      }
+    } else {
+      m_ActivationGesture = false;
+    }
+    
+    if (numDeactivatingHands == 2) {
+      if (!m_DeactivationGesture) {
+        m_GestureStart = Globals::curFrameTime;
+        m_DeactivationGesture = true;
+      } else {
+        const double timeDiff = (Globals::curFrameTime - m_GestureStart).count();
+        if (timeDiff >= gestureTime && manager->m_Active) {
+          manager->Deactivate();
+          m_DeactivationGesture = false;
+        }
+      }
+    } else {
+      m_DeactivationGesture = false;
+    }
+  }
 }
 
 void Scene::drawHands() const {
@@ -207,7 +269,7 @@ void Scene::drawFakeMouse() const {
   static Leap::GL::Rgba<float> rightClickColor(1.0f, 0.5f, 0.3f, 1.0f);
   static const double defaultRadius = 6.0;
   static const double clickRadius = 4.5;
-  if (manager) {
+  if (manager && manager->m_Active) {
     auto pos = sf::Mouse::getPosition();
     const Eigen::Vector2d mousePos(pos.x, -pos.y);
     const auto& transform = manager->m_WindowTransform;
@@ -406,7 +468,7 @@ void Scene::drawUI() const {
   }
 
   {
-    const double clockScale = 0.25;
+    const double clockScale = 0.3;
     m_ClockText->Translation() << curX, curY - spacing, curZ;
     const Eigen::Matrix3d rotation = faceCameraMatrix(m_ClockText->Translation(), Globals::userPos, true);
 

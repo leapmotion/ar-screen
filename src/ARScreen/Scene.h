@@ -59,6 +59,10 @@ private:
   mutable Smoothed<float> m_CalendarOpacity;
   mutable Smoothed<float> m_ButtonAnimation;
 
+  std::chrono::steady_clock::time_point m_GestureStart;
+  bool m_ActivationGesture;
+  bool m_DeactivationGesture;
+
   std::vector<std::shared_ptr<TextPrimitive>> m_NewsFeedItems;
   mutable double m_FeedScroll;
   std::shared_ptr<RectanglePrim> m_NewsFeedRect;

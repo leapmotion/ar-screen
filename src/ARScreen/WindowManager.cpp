@@ -4,7 +4,7 @@
 #include "Globals.h"
 #include "OSInterface/OSVirtualScreen.h"
 
-FakeWindow::FakeWindow(OSWindow& window) : m_Window(window), m_UpdateSize(false), m_UpdatePosition(false), m_ForceUpdate(false), m_ZOrder(0.0) {
+FakeWindow::FakeWindow(OSWindow& window) : m_Window(window), m_UpdateSize(false), m_UpdatePosition(false), m_ForceUpdate(false), m_ZOrder(0.0), m_PositionOffset(Eigen::Vector3d::Zero()), m_Opacity(0.0f) {
   m_Texture = std::shared_ptr<ImagePrimitive>(new ImagePrimitive());
   m_ZOrder.SetSmoothStrength(0.7f);
 }
@@ -40,14 +40,20 @@ void FakeWindow::Update(const WindowTransform& transform, bool texture, double d
   m_ZOrder.SetGoal(m_Window.GetZOrder());
   m_ZOrder.Update(deltaTime);
 
+  m_PositionOffset.Update(deltaTime);
+  m_Opacity.Update(deltaTime);
+
   m_OSPosition = windowPos + 0.5*windowSize;
   m_OSPosition.y() *= -1.0;
 
   m_Texture->Translation() = transform.Forward(m_OSPosition);
   m_Texture->Translation().z() += 10.0 * m_ZOrder.Value();
+  m_Texture->Translation() += m_PositionOffset.Value();
   const Eigen::Matrix3d scaleMatrix = (transform.scale * Eigen::Vector3d(1, -1, 1)).asDiagonal();
   //m_Texture->LinearTransformation() = faceCameraMatrix(m_Texture->Translation(), Globals::userPos) * scaleMatrix;
   m_Texture->LinearTransformation() = scaleMatrix;
+
+  m_Texture->Material().Uniform<AMBIENT_LIGHT_COLOR>().A() = m_Opacity.Value();
 
   m_ForceUpdate = false;
 }
@@ -123,7 +129,7 @@ void FakeWindow::Interact(const WindowTransform& transform, const HandInfoMap& h
   }
 }
 
-WindowManager::WindowManager() : m_RoundRobinCounter(0)
+WindowManager::WindowManager() : m_RoundRobinCounter(0), m_Active(false)
 {
   m_WindowTransform = std::shared_ptr<WindowTransform>(new WindowTransform());
 }
@@ -135,10 +141,13 @@ void WindowManager::OnCreate(OSWindow& window) {
     return;
   }
 
-  m_Windows[windowPtr] = std::shared_ptr<FakeWindow>(new FakeWindow(window));
+  std::shared_ptr<FakeWindow> newWindow = std::shared_ptr<FakeWindow>(new FakeWindow(window));
+  newWindow->m_ForceUpdate = true;
 
-  m_Windows[windowPtr]->m_ForceUpdate = true;
-  //m_Windows[windowPtr]->Update(*m_WindowTransform, true, 0.0);
+  newWindow->m_PositionOffset.SetImmediate(Eigen::Vector3d(0, 0, -1000));
+  newWindow->m_Opacity.SetImmediate(0.0f);
+
+  m_Windows[windowPtr] = newWindow;
 }
 
 void WindowManager::OnDestroy(OSWindow& window) {
@@ -163,8 +172,6 @@ void WindowManager::OnResize(OSWindow& window) {
 }
 
 void WindowManager::Tick(std::chrono::duration<double> deltaT) {
-  static double t = 0;
-  t += deltaT.count();
   AutowiredFast<OSVirtualScreen> fullScreen;
   if (fullScreen) {
     auto screen = fullScreen->PrimaryScreen();
@@ -179,22 +186,64 @@ void WindowManager::Tick(std::chrono::duration<double> deltaT) {
       m_WindowTransform->offset = Globals::screenPos + Eigen::Vector3d(0, Globals::screenHeight, 0);
     } else {
       m_WindowTransform->scale = 500 / screenSize.norm();
-      m_WindowTransform->offset << 0, 200, -100.0;
+      m_WindowTransform->offset << 0, 300, -100.0;
     }
   }
 
-  int maxZ = -1;
-  for (const auto& it : m_Windows) {
-    const int z = it.second->m_Window.GetZOrder();
-    maxZ = std::max(maxZ, z);
-  }
+  int minZ, maxZ;
+  GetZRange(minZ, maxZ);
 
   m_RoundRobinCounter = (m_RoundRobinCounter+1) % m_Windows.size();
   int curCounter = 0;
   for (const auto& it : m_Windows) {
     const int z = it.second->m_Window.GetZOrder();
-    const bool updateTexture = (curCounter == m_RoundRobinCounter || z == maxZ);
+    const bool updateTexture = (curCounter == m_RoundRobinCounter || z == maxZ || it.second->m_ForceUpdate);
     it.second->Update(*m_WindowTransform, updateTexture, deltaT.count());
     curCounter++;
+  }
+}
+
+const float baseSmooth = 0.7f;
+const float smoothVariation = 0.15f;
+
+void WindowManager::Activate() {
+  int minZ, maxZ;
+  GetZRange(minZ, maxZ);
+
+  for (auto& it : m_Windows) {
+    const int z = it.second->m_Window.GetZOrder();
+    const float zRatio = static_cast<float>(z - minZ) / static_cast<float>(maxZ - minZ);
+    const float smooth = baseSmooth + smoothVariation * (1.0f - zRatio);
+    it.second->m_PositionOffset.SetSmoothStrength(smooth);
+    it.second->m_Opacity.SetSmoothStrength(smooth);
+    it.second->m_Opacity.SetGoal(1.0f);
+    it.second->m_PositionOffset.SetGoal(Eigen::Vector3d::Zero());
+  }
+  m_Active = true;
+}
+
+void WindowManager::Deactivate() {
+  int minZ, maxZ;
+  GetZRange(minZ, maxZ);
+
+  for (auto& it : m_Windows) {
+    const int z = it.second->m_Window.GetZOrder();
+    const float zRatio = static_cast<float>(z - minZ) / static_cast<float>(maxZ - minZ);
+    const float smooth = baseSmooth + smoothVariation * zRatio;
+    it.second->m_PositionOffset.SetSmoothStrength(smooth);
+    it.second->m_Opacity.SetSmoothStrength(smooth);
+    it.second->m_Opacity.SetGoal(0.0f);
+    it.second->m_PositionOffset.SetGoal(Eigen::Vector3d(0, 0, -1000));
+  }
+  m_Active = false;
+}
+
+void WindowManager::GetZRange(int& min, int& max) const {
+  min = 999999;
+  max = -999999;
+  for (const auto& it : m_Windows) {
+    const int z = it.second->m_Window.GetZOrder();
+    min = std::min(min, z);
+    max = std::max(max, z);
   }
 }

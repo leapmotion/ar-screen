@@ -38,6 +38,8 @@ public:
   Eigen::Vector2d m_SizeVel;
   Eigen::Vector2d m_PositionVel;
   Smoothed<double> m_ZOrder;
+  Smoothed<Eigen::Vector3d, 10> m_PositionOffset;
+  Smoothed<float, 10> m_Opacity;
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
@@ -51,10 +53,16 @@ public:
   void OnDestroy(OSWindow& window) override;
   void OnResize(OSWindow& window) override;
 
+  void Activate();
+  void Deactivate();
+
+  void GetZRange(int& min, int& max) const;
+
   // Updatable overrides:
   void Tick(std::chrono::duration<double> deltaT) override;
 
   std::unordered_map<std::shared_ptr<OSWindow>, std::shared_ptr<FakeWindow>> m_Windows;
   int m_RoundRobinCounter;
   std::shared_ptr<WindowTransform> m_WindowTransform;
+  bool m_Active;
 };

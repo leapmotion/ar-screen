@@ -175,7 +175,10 @@ void HandInfo::DrawCapsuleHand(RenderState& renderer, const EigenTypes::Matrix3x
 HandInfo::IntersectionVector HandInfo::IntersectRectangle(const RectanglePrim& prim) const {
   const Eigen::Vector3d center = prim.Translation();
   const Eigen::Matrix3d linear = prim.LinearTransformation();
-  const Eigen::Vector3d normal = prim.LinearTransformation().col(2).normalized();
+  Eigen::Vector3d normal = prim.LinearTransformation().col(2).normalized();
+  if (normal.z() < 0) {
+    normal *= -1.0;
+  }
   const Eigen::Vector3d scale(linear.row(0).norm(), linear.row(1).norm(), linear.row(2).norm());
   IntersectionVector intersections;
 

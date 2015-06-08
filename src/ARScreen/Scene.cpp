@@ -312,6 +312,7 @@ void Scene::drawWindows() const {
           m_IntersectionDisk->Translation() = intersection.point;
           m_IntersectionDisk->SetRadius(1.25*intersection.radius);
           m_IntersectionDisk->Material().Uniform<AMBIENT_LIGHT_COLOR>() = makeIntersectionDiskColor(intersection.confidence);
+          m_IntersectionDisk->LinearTransformation() = Eigen::Matrix3d::Identity();
           PrimitiveBase::DrawSceneGraph(*m_IntersectionDisk, m_Renderer);
         }
       }

@@ -522,7 +522,7 @@ void Scene::createNewsFeed() {
     feedItem->Material().Uniform<AMBIENT_LIGHT_COLOR>().A() = 0.0f;
   }
 
-  m_NewsFeedRect->Material().Uniform<AMBIENT_LIGHT_COLOR>().A() = 0.15f;
+  m_NewsFeedRect->Material().Uniform<AMBIENT_LIGHT_COLOR>() = Leap::GL::Rgba<float>(0.7f, 0.9f, 1.0f, 0.15f);
   m_FeedScroll = 10000;
 }
 

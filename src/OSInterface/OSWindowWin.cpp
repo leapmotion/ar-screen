@@ -102,7 +102,7 @@ void OSWindowWin::TakeSnapshot(void) {
 }
 
 std::shared_ptr<ImagePrimitive> OSWindowWin::GetWindowTexture(std::shared_ptr<ImagePrimitive> img)  {
-  TakeSnapshot();
+  TakeSnapshot(); // FOR NOW, WE WILL CONTINUE TO TAKE THE SNAPSHOT BEFORE UPLOADING TO GPU -- FIXME
 
   if (!m_phBitmapBits) {
     return img;

@@ -3,6 +3,7 @@
 #include "OSInterface/OSWindow.h"
 #include "OSInterface/OSWindowEvent.h"
 #include "utility/Updatable.h"
+#include "utility/Animation.h"
 #include "Primitives/Primitives.h"
 #include "HandInfo.h"
 
@@ -36,6 +37,7 @@ public:
   bool m_UpdatePosition;
   Eigen::Vector2d m_SizeVel;
   Eigen::Vector2d m_PositionVel;
+  Smoothed<double> m_ZOrder;
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 

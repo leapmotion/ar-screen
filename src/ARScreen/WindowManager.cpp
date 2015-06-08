@@ -4,8 +4,9 @@
 #include "Globals.h"
 #include "OSInterface/OSVirtualScreen.h"
 
-FakeWindow::FakeWindow(OSWindow& window) : m_Window(window), m_UpdateSize(false), m_UpdatePosition(false), m_ForceUpdate(false) {
+FakeWindow::FakeWindow(OSWindow& window) : m_Window(window), m_UpdateSize(false), m_UpdatePosition(false), m_ForceUpdate(false), m_ZOrder(0.0) {
   m_Texture = std::shared_ptr<ImagePrimitive>(new ImagePrimitive());
+  m_ZOrder.SetSmoothStrength(0.7f);
 }
 
 void FakeWindow::Update(const WindowTransform& transform, bool texture, double deltaTime) {
@@ -36,11 +37,14 @@ void FakeWindow::Update(const WindowTransform& transform, bool texture, double d
     m_Window.SetPosition(newPos);
   }
 
+  m_ZOrder.SetGoal(m_Window.GetZOrder());
+  m_ZOrder.Update(deltaTime);
+
   m_OSPosition = windowPos + 0.5*windowSize;
   m_OSPosition.y() *= -1.0;
 
   m_Texture->Translation() = transform.Forward(m_OSPosition);
-  m_Texture->Translation().z() += 10.0 * m_Window.GetZOrder();
+  m_Texture->Translation().z() += 10.0 * m_ZOrder.Value();
   const Eigen::Matrix3d scaleMatrix = (transform.scale * Eigen::Vector3d(1, -1, 1)).asDiagonal();
   //m_Texture->LinearTransformation() = faceCameraMatrix(m_Texture->Translation(), Globals::userPos) * scaleMatrix;
   m_Texture->LinearTransformation() = scaleMatrix;
@@ -180,12 +184,8 @@ void WindowManager::Tick(std::chrono::duration<double> deltaT) {
   }
 
   int maxZ = -1;
-  int maxZForce = -1;
   for (const auto& it : m_Windows) {
     const int z = it.second->m_Window.GetZOrder();
-    if (it.second->m_ForceUpdate) {
-      maxZForce = std::max(maxZForce, z);
-    }
     maxZ = std::max(maxZ, z);
   }
 
@@ -193,7 +193,7 @@ void WindowManager::Tick(std::chrono::duration<double> deltaT) {
   int curCounter = 0;
   for (const auto& it : m_Windows) {
     const int z = it.second->m_Window.GetZOrder();
-    const bool updateTexture = (curCounter == m_RoundRobinCounter || z == maxZ || (z == maxZForce && it.second->m_ForceUpdate));
+    const bool updateTexture = (curCounter == m_RoundRobinCounter || z == maxZ);
     it.second->Update(*m_WindowTransform, updateTexture, deltaT.count());
     curCounter++;
   }

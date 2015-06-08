@@ -120,8 +120,6 @@ int OSWindowMac::TakeSnapshot(void) {
 }
 
 std::shared_ptr<ImagePrimitive> OSWindowMac::GetWindowTexture(std::shared_ptr<ImagePrimitive> img) {
-  TakeSnapshot(); // FOR NOW, WE WILL CONTINUE TO TAKE THE SNAPSHOT BEFORE UPLOADING TO GPU -- FIXME
-
   CGImageRef imageRef = CGImageRetain(m_imageRef);
 
   if (!imageRef) {

@@ -46,7 +46,7 @@ void FakeWindow::Update(const WindowTransform& transform, bool texture, double d
   m_OSPosition.y() *= -1.0;
 
   m_Texture->Translation() = transform.Forward(m_OSPosition);
-  m_Texture->Translation().z() += 10.0 * m_ZOrder.Value();
+  m_Texture->Translation().z() += 20.0 * m_ZOrder.Value();
   m_Texture->Translation() += m_PositionOffset.Value();
   const Eigen::Matrix3d scaleMatrix = (transform.scale * Eigen::Vector3d(1, -1, 1)).asDiagonal();
   //m_Texture->LinearTransformation() = faceCameraMatrix(m_Texture->Translation(), Globals::userPos) * scaleMatrix;

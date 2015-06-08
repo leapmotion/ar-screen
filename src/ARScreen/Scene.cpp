@@ -207,7 +207,7 @@ void Scene::leapInteract(float deltaTime) {
   }
   m_ScrollVel.SetGoal(scrollVel);
   m_ScrollVel.Update(deltaTime);
-  m_FeedScroll += deltaTime * m_ScrollVel.Value();;
+  m_FeedScroll += deltaTime * m_ScrollVel.Value();
 
   if (manager) {
     // detect activation gesture
@@ -363,7 +363,7 @@ void Scene::drawUI() const {
   const double spacing = 2.25 * radius;
   double curX = 350;
   double curY = 100 + Globals::globalHeightOffset;
-  double curZ = 200;
+  double curZ = 175;
 
   {
     const Eigen::Matrix3d calendarExpandedMatrix = Eigen::Matrix3d::Identity();
@@ -531,7 +531,7 @@ void Scene::drawNewsFeed() const {
   const double feedWidth = 350.0;
 
   m_NewsFeedRect->SetSize(Eigen::Vector2d(feedWidth, feedHeight));
-  m_NewsFeedRect->Translation() << -350, 50 + Globals::globalHeightOffset, 300;
+  m_NewsFeedRect->Translation() << -350, 50 + Globals::globalHeightOffset, 250;
   m_NewsFeedRect->LinearTransformation() = faceCameraMatrix(m_NewsFeedRect->Translation(), Globals::userPos, false);
 
   double curY = 0;

@@ -67,6 +67,7 @@ private:
 
   std::vector<std::shared_ptr<TextPrimitive>> m_NewsFeedItems;
   mutable double m_FeedScroll;
+  Smoothed<double> m_ScrollVel;
   std::shared_ptr<RectanglePrim> m_NewsFeedRect;
 
   GLTexture2ImageRef m_Person1;

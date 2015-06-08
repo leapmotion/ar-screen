@@ -10,7 +10,8 @@ Scene::Scene() :
   m_CalendarOpacity(0.0f),
   m_ButtonAnimation(1.0f),
   m_ActivationGesture(false),
-  m_DeactivationGesture(false)
+  m_DeactivationGesture(false),
+  m_ScrollVel(0.0)
 {
   m_ScreenPositionSmoother.SetSmoothStrength(0.9f);
   m_ScreenRotationSmoother.SetSmoothStrength(0.9f);
@@ -191,15 +192,22 @@ void Scene::leapInteract(float deltaTime) {
     }
   }
 
-  double movement = 0;
+  double scrollVel = 0;
   for (const auto& it : m_TrackedHands) {
     const HandInfo& trackedHand = *it.second;
     HandInfo::IntersectionVector intersections = trackedHand.IntersectRectangle(*m_NewsFeedRect);
     for (const auto& intersection : intersections) {
-      movement += 0.25 * deltaTime * intersection.velocity.y();
+      scrollVel += 0.25 * intersection.velocity.y();
     }
   }
-  m_FeedScroll += movement;
+  if (std::fabs(scrollVel) > 0.01) {
+    m_ScrollVel.SetSmoothStrength(0.1f);
+  } else {
+    m_ScrollVel.SetSmoothStrength(0.8f);
+  }
+  m_ScrollVel.SetGoal(scrollVel);
+  m_ScrollVel.Update(deltaTime);
+  m_FeedScroll += deltaTime * m_ScrollVel.Value();;
 
   if (manager) {
     // detect activation gesture

@@ -2,6 +2,7 @@
 #include "OSWindow.h"
 #include "utility/HandleUtilitiesWin.h"
 #include <type_traits>
+#include <atomic>
 
 class OSWindowEvent;
 class OSWindowWin:
@@ -27,6 +28,8 @@ private:
   // Size at the time of the last call to CheckSize
   SIZE m_prevSize;
 
+  std::atomic_flag m_lock;
+
 public:
   // PMPL routines:
   void SetZOrder(int zOrder) {
@@ -45,6 +48,7 @@ public:
   bool IsValid(void) override;
   uint32_t GetOwnerPid(void) override;
   uint64_t GetWindowID(void) const override { return (uint64_t) hwnd; }
+  void TakeSnapshot(void) override;
   std::shared_ptr<ImagePrimitive> GetWindowTexture(std::shared_ptr<ImagePrimitive> img) override;
   bool GetFocus(void) override;
   void SetFocus(void) override;

@@ -57,6 +57,12 @@ public:
   /// </returns>
   virtual uint64_t GetWindowID(void) const = 0;
 
+  /// <remarks>
+  /// Take a snapshot of the current window contents. Ideally this is called in a separate
+  /// thread, with the cached texture readily available for use by GetWindowTexture.
+  /// </remarks>
+  virtual void TakeSnapshot(void) =  0;
+
   /// <summary>
   /// Copies an image corresponding to a window into the specified image primitive
   /// </summary>
@@ -123,4 +129,3 @@ public:
     return GetWindowID() == rhs.GetWindowID();
   }
 };
-

@@ -1,5 +1,6 @@
 #pragma once
 #include "OSWindow.h"
+#include <atomic>
 #include <type_traits>
 
 #include <Foundation/NSDictionary.h>
@@ -15,6 +16,7 @@ public:
   bool IsValid(void) override;
   uint32_t GetOwnerPid(void) override;
   uint64_t GetWindowID(void) const override { return (uint64_t) m_windowID; }
+  void TakeSnapshot(void) override;
   std::shared_ptr<ImagePrimitive> GetWindowTexture(std::shared_ptr<ImagePrimitive> img) override;
   bool GetFocus(void) override;
   void SetFocus(void) override;
@@ -31,6 +33,7 @@ private:
   const CGWindowID m_windowID;
   CGWindowID m_overlayWindowID;
   CGPoint m_overlayOffset;
+  std::atomic<CGImageRef> m_imageRef;
   NSDictionary* m_info;
   uint32_t m_mark;
 

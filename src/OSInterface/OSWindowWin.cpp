@@ -12,6 +12,7 @@ OSWindowWin::OSWindowWin(HWND hwnd):
   hwnd{hwnd},
   m_phBitmapBits{nullptr}
 {
+  m_lock.clear();
   m_szBitmap.cx = 0;
   m_szBitmap.cy = 0;
   m_prevSize = m_szBitmap;
@@ -50,7 +51,7 @@ uint32_t OSWindowWin::GetOwnerPid(void) {
   return pid;
 }
 
-std::shared_ptr<ImagePrimitive> OSWindowWin::GetWindowTexture(std::shared_ptr<ImagePrimitive> img)  {
+void OSWindowWin::TakeSnapshot(void) {
   HDC hdc = GetWindowDC(hwnd);
   auto cleanhdc = MakeAtExit([&] {ReleaseDC(hwnd, hdc); });
 
@@ -63,7 +64,7 @@ std::shared_ptr<ImagePrimitive> OSWindowWin::GetWindowTexture(std::shared_ptr<Im
   }
   if(!bmSz.cx || !bmSz.cy)
     // Cannot create a window texture, window is gone
-    return img;
+    return;
 
   if(m_szBitmap.cx != bmSz.cx || m_szBitmap.cy != bmSz.cy) {
     BITMAPINFO bmi;
@@ -93,8 +94,19 @@ std::shared_ptr<ImagePrimitive> OSWindowWin::GetWindowTexture(std::shared_ptr<Im
     m_szBitmap = bmSz;
   }
 
+  while (m_lock.test_and_set(std::memory_order_acquire))  // acquire lock
+    ; // spin
   // Bit blit time to get at those delicious pixels
   BitBlt(m_hBmpDC.get(), 0, 0, m_szBitmap.cx, m_szBitmap.cy, hdc, 0, 0, SRCCOPY);
+  m_lock.clear(std::memory_order_release); // release lock
+}
+
+std::shared_ptr<ImagePrimitive> OSWindowWin::GetWindowTexture(std::shared_ptr<ImagePrimitive> img)  {
+  TakeSnapshot();
+
+  if (!m_phBitmapBits) {
+    return img;
+  }
 
   // See if the texture underlying image was resized or not. If so, we need to create a new texture
   std::shared_ptr<Leap::GL::Texture2> texture = img->Texture();
@@ -104,9 +116,14 @@ std::shared_ptr<ImagePrimitive> OSWindowWin::GetWindowTexture(std::shared_ptr<Im
       texture.reset();
     }
   }
+
   Leap::GL::Texture2PixelData pixelData{ GL_BGRA, GL_UNSIGNED_BYTE, m_phBitmapBits, static_cast<size_t>(m_szBitmap.cx * m_szBitmap.cy * 4) };
+
   if (texture) {
+    while (m_lock.test_and_set(std::memory_order_acquire))  // acquire lock
+      ; // spin
     texture->TexSubImage(pixelData);
+    m_lock.clear(std::memory_order_release); // release lock
   } else {
     Leap::GL::Texture2Params params{ static_cast<GLsizei>(m_szBitmap.cx), static_cast<GLsizei>(m_szBitmap.cy) };
     params.SetTarget(GL_TEXTURE_2D);
@@ -116,7 +133,11 @@ std::shared_ptr<ImagePrimitive> OSWindowWin::GetWindowTexture(std::shared_ptr<Im
     params.SetTexParameteri(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     params.SetTexParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
+    while (m_lock.test_and_set(std::memory_order_acquire))  // acquire lock
+      ; // spin
     texture = std::make_shared<Leap::GL::Texture2>(params, pixelData);
+    m_lock.clear(std::memory_order_release); // release lock
+
     img->SetTexture(texture);
     img->SetScaleBasedOnTextureSize();
   }

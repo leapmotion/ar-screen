@@ -15,6 +15,7 @@ OSWindowMac::OSWindowMac(NSDictionary* info) :
   m_windowID([[info objectForKey:(id)kCGWindowNumber] unsignedIntValue]),
   m_overlayWindowID(0),
   m_overlayOffset(NSZeroPoint),
+  m_imageRef(nullptr),
   m_info([info retain]),
   m_mark(0)
 {
@@ -66,13 +67,10 @@ uint32_t OSWindowMac::GetOwnerPid(void) {
   return static_cast<uint32_t>([[m_info objectForKey:(id)kCGWindowOwnerPID] intValue]);
 }
 
-std::shared_ptr<ImagePrimitive> OSWindowMac::GetWindowTexture(std::shared_ptr<ImagePrimitive> img)  {
+void OSWindowMac::TakeSnapshot(void) {
   CGImageRef imageRef = CGWindowListCreateImage(CGRectNull, kCGWindowListOptionIncludingWindow,
                                                 m_windowID, kCGWindowImageBoundsIgnoreFraming |
                                                             kCGWindowImageNominalResolution);
-  if (!imageRef) {
-    return img;
-  }
   // If this window has an overlay window, apply the overlay to our image
   if (m_overlayWindowID) {
     CGImageRef overlayImageRef = CGWindowListCreateImage(CGRectNull, kCGWindowListOptionIncludingWindow,
@@ -112,6 +110,20 @@ std::shared_ptr<ImagePrimitive> OSWindowMac::GetWindowTexture(std::shared_ptr<Im
         imageRef = compositeImageRef;
       }
     }
+  }
+  imageRef = m_imageRef.exchange(imageRef);
+  if (imageRef) {
+    CFRelease(imageRef);
+  }
+}
+
+std::shared_ptr<ImagePrimitive> OSWindowMac::GetWindowTexture(std::shared_ptr<ImagePrimitive> img) {
+  TakeSnapshot();
+
+  CGImageRef imageRef = CGImageRetain(m_imageRef);
+
+  if (!imageRef) {
+    return img;
   }
 
   CFDataRef dataRef = CGDataProviderCopyData(CGImageGetDataProvider(imageRef));

@@ -28,8 +28,6 @@ set(ARScreen_SOURCES
   HandInfo.cpp
   ImagePassthrough.cpp
   ImagePassthrough.h
-  Mirror.h
-  Mirror.cpp
   Resource.h
   ResourceManager.h
   Scene.h
@@ -41,6 +39,11 @@ set(ARScreen_SOURCES
   ${CMAKE_CURRENT_BINARY_DIR}/Version.h
 )
 
+add_windows_sources(
+  ARScreen_SOURCES
+  Mirror.h
+  Mirror.cpp
+)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 

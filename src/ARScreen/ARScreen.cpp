@@ -9,7 +9,9 @@
 #include "utility/PlatformInitializer.h"
 #include "utility/Utilities.h"
 
+#if _WIN32
 #include "Mirror.h"
+#endif
 
 #include <iostream>
 #include <stdexcept>

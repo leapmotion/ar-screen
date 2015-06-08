@@ -28,6 +28,8 @@ public:
   bool IsVisible(void) const override;
   void SetPosition(const OSPoint& pos) override;
   void SetSize(const OSSize& size) override;
+  void SetPositionAndSize(const OSPoint& pos, const OSSize& size) override;
+  void GetPositionAndSize(OSPoint& pos, OSSize& size) override;
 
 private:
   const CGWindowID m_windowID;

@@ -13,12 +13,24 @@ void FakeWindow::Update(const WindowTransform& transform, bool texture, double d
     // todo: move CPU part of texture retrieval to a separate thread, only do GPU upload here
     m_Texture = m_Window.GetWindowTexture(m_Texture);
   }
-  const OSPoint pos = m_Window.GetPosition();
-  const OSSize size = m_Window.GetSize();
+  OSPoint pos;
+  OSSize size;
+  m_Window.GetPositionAndSize(pos, size);
   Eigen::Vector2d windowPos(pos.x, pos.y);
   Eigen::Vector2d windowSize(size.width, size.height);
 
-  if (m_UpdateSize) {
+  if (m_UpdateSize && m_UpdatePosition) {
+    const Eigen::Vector2d sizeDiff = deltaTime * m_SizeVel;
+    windowSize += sizeDiff;
+    OSSize newSize;
+    newSize.width = windowSize.x();
+    newSize.height = windowSize.y();
+    windowPos += deltaTime * m_PositionVel;
+    OSPoint newPos;
+    newPos.x = windowPos.x();
+    newPos.y = windowPos.y();
+    m_Window.SetPositionAndSize(newPos, newSize);
+  } else if (m_UpdateSize) {
     const Eigen::Vector2d sizeDiff = deltaTime * m_SizeVel;
     windowSize += sizeDiff;
     OSSize newSize;
@@ -26,9 +38,7 @@ void FakeWindow::Update(const WindowTransform& transform, bool texture, double d
     newSize.height = windowSize.y();
     m_Window.SetSize(newSize);
     windowPos -= 0.5 * sizeDiff; // window origin is top left corner, so resizing should move origin
-  }
-
-  if (m_UpdatePosition) {
+  } else if (m_UpdatePosition) {
     windowPos += deltaTime * m_PositionVel;
     OSPoint newPos;
     newPos.x = windowPos.x();

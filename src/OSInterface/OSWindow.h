@@ -125,6 +125,10 @@ public:
 
   virtual void SetSize(const OSSize& size) = 0;
 
+  virtual void SetPositionAndSize(const OSPoint& pos, const OSSize& size) = 0;
+
+  virtual void GetPositionAndSize(OSPoint& pos, OSSize& size) = 0;
+
   bool operator==(const OSWindow& rhs) const {
     return GetWindowID() == rhs.GetWindowID();
   }

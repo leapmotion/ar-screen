@@ -205,3 +205,17 @@ void OSWindowWin::SetPosition(const OSPoint& pos) {
 void OSWindowWin::SetSize(const OSSize& size) {
   SetWindowPos(hwnd, HWND_TOP, 1, 1, size.width, size.height, SWP_NOMOVE);
 }
+
+void OSWindowWin::SetPositionAndSize(const OSPoint& pos, const OSSize& size) {
+  SetWindowPos(hwnd, HWND_TOP, pos.x, pos.y, size.width, size.height, 0);
+}
+
+void OSWindowWin::GetPositionAndSize(OSPoint& pos, OSSize& size) {
+  RECT rect;
+  GetWindowRect(hwnd, &rect);
+
+  pos.x = (float)rect.left;
+  pos.y = (float)rect.top;
+  size.width = (float)(rect.right - rect.left);
+  size.height = (float)(rect.bottom - rect.top);
+}

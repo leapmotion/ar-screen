@@ -293,3 +293,11 @@ void OSWindowMac::SetPosition(const OSPoint& pos) {
 void OSWindowMac::SetSize(const OSSize& size) {
   // FIXME
 }
+
+void OSWindowMac::SetPositionAndSize(const OSPoint& pos, const OSSize& size) {
+  // FIXME
+}
+
+void OSWindowMac::GetPositionAndSize(OSPoint& pos, OSSize& size) {
+  // FIXME
+}

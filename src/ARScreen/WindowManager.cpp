@@ -205,8 +205,8 @@ void WindowManager::Tick(std::chrono::duration<double> deltaT) {
       m_WindowTransform->rotation = Globals::screenBasis;
       m_WindowTransform->offset = Globals::screenPos + Eigen::Vector3d(0, Globals::screenHeight, 0);
     } else {
-      m_WindowTransform->scale = 500 / screenSize.norm();
-      m_WindowTransform->offset << 0, 300, -100.0;
+      m_WindowTransform->scale = 700 / screenSize.norm();
+      m_WindowTransform->offset << 0, 400, -150.0;
     }
   }
 

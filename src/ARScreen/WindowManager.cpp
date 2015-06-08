@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "WindowManager.h"
 #include "utility/Utilities.h"
-#include "Globals.h"
 #include "OSInterface/OSVirtualScreen.h"
 
 FakeWindow::FakeWindow(OSWindow& window) : m_Window(window), m_UpdateSize(false), m_UpdatePosition(false), m_ForceUpdate(false), m_ZOrder(0.0), m_PositionOffset(Eigen::Vector3d::Zero()), m_Opacity(0.0f) {
@@ -129,6 +128,9 @@ void FakeWindow::Interact(const WindowTransform& transform, const HandInfoMap& h
   }
 }
 
+const float baseSmooth = 0.7f;
+const float smoothVariation = 0.15f;
+
 WindowManager::WindowManager() : m_RoundRobinCounter(0), m_Active(false)
 {
   m_WindowTransform = std::shared_ptr<WindowTransform>(new WindowTransform());
@@ -146,6 +148,13 @@ void WindowManager::OnCreate(OSWindow& window) {
 
   newWindow->m_PositionOffset.SetImmediate(Eigen::Vector3d(0, 0, -1000));
   newWindow->m_Opacity.SetImmediate(0.0f);
+  newWindow->m_PositionOffset.SetSmoothStrength(baseSmooth);
+  newWindow->m_Opacity.SetSmoothStrength(baseSmooth);
+
+  if (m_Active) {
+    newWindow->m_Opacity.SetGoal(1.0f);
+    newWindow->m_PositionOffset.SetGoal(Eigen::Vector3d::Zero());
+  }
 
   m_Windows[windowPtr] = newWindow;
 }
@@ -202,9 +211,6 @@ void WindowManager::Tick(std::chrono::duration<double> deltaT) {
     curCounter++;
   }
 }
-
-const float baseSmooth = 0.7f;
-const float smoothVariation = 0.15f;
 
 void WindowManager::Activate() {
   int minZ, maxZ;

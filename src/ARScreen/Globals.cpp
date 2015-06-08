@@ -12,3 +12,5 @@ double Globals::screenWidth = 1.0;
 double Globals::screenHeight = 1.0;
 Eigen::Vector3d Globals::screenPos(Eigen::Vector3d::Zero());
 Eigen::Matrix3d Globals::screenBasis(Eigen::Matrix3d::Identity());
+double Globals::elapsedTimeSeconds = 0;
+double Globals::globalHeightOffset = -100;

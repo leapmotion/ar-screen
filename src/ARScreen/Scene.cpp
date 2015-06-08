@@ -351,7 +351,7 @@ void Scene::drawUI() const {
   const double radius = m_IconDisk->Radius();
   const double spacing = 2.25 * radius;
   double curX = 350;
-  double curY = 100;
+  double curY = 100 + Globals::globalHeightOffset;
   double curZ = 200;
 
   {
@@ -516,12 +516,11 @@ void Scene::createNewsFeed() {
 }
 
 void Scene::drawNewsFeed() const {
-  const double startY = 50;
   const double feedHeight = 250.0;
   const double feedWidth = 350.0;
 
   m_NewsFeedRect->SetSize(Eigen::Vector2d(feedWidth, feedHeight));
-  m_NewsFeedRect->Translation() << -350, 50, 300;
+  m_NewsFeedRect->Translation() << -350, 50 + Globals::globalHeightOffset, 300;
   m_NewsFeedRect->LinearTransformation() = faceCameraMatrix(m_NewsFeedRect->Translation(), Globals::userPos, false);
 
   double curY = 0;

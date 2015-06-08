@@ -80,6 +80,7 @@ void ARScreen::Main(void) {
     m_Window.SetWindowPos(windowsPos.x, windowsPos.y);
     m_Window.SetWindowSize(m_Oculus.GetHMDWidth(), m_Oculus.GetHMDHeight());
     m_ShowMirror = true;
+    m_Oculus.DismissHealthWarning();
   }
 
   m_Scene.Init();
@@ -98,6 +99,7 @@ void ARScreen::Main(void) {
 
     Globals::curFrameTime = std::chrono::steady_clock::now();
     Globals::timeBetweenFrames = Globals::curFrameTime - Globals::prevFrameTime;
+    Globals::elapsedTimeSeconds += Globals::timeBetweenFrames.count();
 
     // Main operations
     Update();
@@ -149,8 +151,6 @@ void ARScreen::Render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   if (Globals::haveOculus) {
-    m_Oculus.DismissHealthWarning();
-
     m_Oculus.BeginFrame();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

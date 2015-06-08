@@ -159,14 +159,14 @@ void OculusVR::BeginFrame() {
   ovrFrameTiming frameTiming = ovrHmd_BeginFrame(m_HMD, 0);
 
   static OVR::Vector3f HeadPos(0.0f, 0.0f, 0.0f);
-  //HeadPos.y = ovrHmd_GetFloat(m_HMD, OVR_KEY_EYE_HEIGHT, HeadPos.y);
+  HeadPos.y = ovrHmd_GetFloat(m_HMD, OVR_KEY_EYE_HEIGHT, HeadPos.y);
 
   glBindFramebuffer(GL_FRAMEBUFFER, m_FrameBuffer);
 
   for (int eyeIndex = 0; eyeIndex < ovrEye_Count; eyeIndex++) {
     ovrEyeType eye = m_HMD->EyeRenderOrder[eyeIndex];
     m_EyeRenderPose[eye] = ovrHmd_GetHmdPosePerEye(m_HMD, eye);
-    m_EyeProjection[eye] = ovrMatrix4f_Projection(m_EyeRenderDesc[eye].Fov, 0.1f, 10000.0f, true);
+    m_EyeProjection[eye] = ovrMatrix4f_Projection(m_EyeRenderDesc[eye].Fov, 1.0f, 10000.0f, true);
 
     const OVR::Quatf orientation = m_EyeRenderPose[eye].Orientation;
     OVR::Vector3f worldEyePos = m_EyeRenderPose[eye].Position;

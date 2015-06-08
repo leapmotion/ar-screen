@@ -14,4 +14,6 @@ public:
   static double screenHeight;
   static Eigen::Vector3d screenPos;
   static Eigen::Matrix3d screenBasis;
+  static double elapsedTimeSeconds;
+  static double globalHeightOffset;
 };

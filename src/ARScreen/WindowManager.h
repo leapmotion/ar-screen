@@ -6,15 +6,20 @@
 #include "utility/Animation.h"
 #include "Primitives/Primitives.h"
 #include "HandInfo.h"
+#include "Globals.h"
 
 struct WindowTransform {
   WindowTransform() : scale(1.0), center(Eigen::Vector2d::Zero()), offset(Eigen::Vector3d::Zero()), rotation(Eigen::Matrix3d::Identity()) {}
   Eigen::Vector3d Forward(const Eigen::Vector2d& pos) const {
     const Eigen::Vector2d adjusted = scale * (pos - center);
-    return offset + rotation * Eigen::Vector3d(adjusted.x(), adjusted.y(), 0.0);
+    Eigen::Vector3d result3D = offset + rotation * Eigen::Vector3d(adjusted.x(), adjusted.y(), 0.0);
+    result3D.y() += Globals::globalHeightOffset;
+    return result3D;
   }
   Eigen::Vector2d Backward(const Eigen::Vector3d& pos) const {
-    const Eigen::Vector3d adjusted = (rotation.inverse() * pos - offset) / scale;
+    Eigen::Vector3d adjusted = pos;
+    adjusted.y() -= Globals::globalHeightOffset;
+    adjusted = (rotation.inverse() * adjusted - offset) / scale;
     return Eigen::Vector2d(adjusted.x(), adjusted.y()) + center;
   }
   double scale;

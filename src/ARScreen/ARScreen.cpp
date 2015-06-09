@@ -217,3 +217,12 @@ void ARScreen::ShutdownMirror() {
     m_MirrorThread.join();
   }
 }
+
+//Some laptops have dual integrated and discrete GPUs.  Since the default renderer is not always
+//the discrete one, this code tries to force using the discrete graphics
+#if _WIN32
+typedef unsigned long DWORD;
+extern "C" {
+  _declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+}
+#endif

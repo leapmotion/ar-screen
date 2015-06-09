@@ -370,7 +370,7 @@ void Scene::drawUI() const {
   const double spacing = 2.25 * radius;
   double curX = 350;
   double curY = 100 + Globals::globalHeightOffset;
-  double curZ = 175;
+  double curZ = 175 + Globals::globalZOffset;
 
   const float blend = m_ButtonAnimation.Value();
   const float alpha = 0.85f * SmootherStep(1.0f - blend);
@@ -572,7 +572,7 @@ void Scene::drawNewsFeed() const {
   const double feedWidth = 350.0;
 
   m_NewsFeedRect->SetSize(Eigen::Vector2d(feedWidth, feedHeight));
-  m_NewsFeedRect->Translation() << -350, 50 + Globals::globalHeightOffset, 250;
+  m_NewsFeedRect->Translation() << -350, 50 + Globals::globalHeightOffset, 250 + Globals::globalZOffset;
   m_NewsFeedRect->LinearTransformation() = faceCameraMatrix(m_NewsFeedRect->Translation(), Globals::userPos, false);
 
   double curY = 0;
@@ -640,7 +640,7 @@ void Scene::drawPeople() const {
   const double spacing = 3 * radius;
   double curX = -spacing;
   double curY = -125 + Globals::globalHeightOffset;
-  double curZ = -325;
+  double curZ = -325 + Globals::globalZOffset;
 
   const Leap::GL::Rgba<float> bgColor(1.0f, 1.0f, 1.0f, 0.15f);
   const Leap::GL::Rgba<float> notifyColor(1.0f, 1.0f, 1.0f, 0.5f);

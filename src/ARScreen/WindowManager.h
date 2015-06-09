@@ -15,11 +15,13 @@ struct WindowTransform {
     const Eigen::Vector2d adjusted = scale * (pos - center);
     Eigen::Vector3d result3D = offset + rotation * Eigen::Vector3d(adjusted.x(), adjusted.y(), 0.0);
     result3D.y() += Globals::globalHeightOffset;
+    result3D.z() += Globals::globalZOffset;
     return result3D;
   }
   Eigen::Vector2d Backward(const Eigen::Vector3d& pos) const {
     Eigen::Vector3d adjusted = pos;
     adjusted.y() -= Globals::globalHeightOffset;
+    adjusted.z() -= Globals::globalZOffset;
     adjusted = (rotation.inverse() * adjusted - offset) / scale;
     return Eigen::Vector2d(adjusted.x(), adjusted.y()) + center;
   }

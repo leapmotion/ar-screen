@@ -16,4 +16,5 @@ public:
   static Eigen::Matrix3d screenBasis;
   static double elapsedTimeSeconds;
   static double globalHeightOffset;
+  static double globalZOffset;
 };
